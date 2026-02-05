@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Nav } from "@/components/nav";
-import { ThemeProvider } from "@/components/theme-provider";
+import { FocusModeProvider } from "@/components/focus-mode-context";
 
 export const metadata: Metadata = {
   title: "Job Tracker",
@@ -25,13 +24,13 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="font-sans antialiased">
-        <ThemeProvider>
-          <Nav />
-          <main className="min-h-screen p-4 sm:p-6 bg-background overflow-x-hidden">{children}</main>
-        </ThemeProvider>
+        <FocusModeProvider>{children}</FocusModeProvider>
       </body>
     </html>
   );

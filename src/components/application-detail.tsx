@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CHECKLIST_ITEMS, CHECKLIST_LABELS } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,8 @@ import { Timeline } from "@/components/timeline";
 import { ContactList } from "@/components/contact-list";
 import { InteractionList } from "@/components/interaction-list";
 import { TaskList } from "@/components/task-list";
-import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { Trash2, Copy, Star, MessageSquare, Activity, Link2, FileText, ListChecks, Users, CalendarCheck } from "lucide-react";
 
 type Application = {
   id: string;
@@ -43,6 +44,8 @@ type Application = {
   contacts: unknown[];
   interactions: unknown[];
   tasks: unknown[];
+  activities?: { id: string; type: string; payload: string | null; createdAt: string }[];
+  isFavorite?: boolean;
   [key: string]: unknown;
 };
 
@@ -75,6 +78,14 @@ export function ApplicationDetail({
   const [editing, setEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
+  const [favorite, setFavorite] = useState(!!application.isFavorite);
+  const [activityNote, setActivityNote] = useState("");
+  const [addingNote, setAddingNote] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  useEffect(() => {
+    setFavorite(!!application.isFavorite);
+  }, [application.isFavorite]);
   const [checklistState, setChecklistState] = useState<Record<string, boolean>>(
     () => parseChecklist(application.checklist ?? null)
   );
@@ -119,6 +130,63 @@ export function ApplicationDetail({
     onUpdate();
   };
 
+  const handleDuplicate = async () => {
+    setDuplicating(true);
+    try {
+      const res = await fetch(`/api/applications/${application.id}/duplicate`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const duplicate = await res.json();
+        router.push(`/applications/${duplicate.id}`);
+      }
+    } finally {
+      setDuplicating(false);
+    }
+  };
+
+  const handleFavorite = async () => {
+    const next = !favorite;
+    setFavorite(next);
+    try {
+      await fetch(`/api/applications/${application.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isFavorite: next }),
+      });
+      onUpdate();
+    } catch {
+      setFavorite(!next);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (typeof window === "undefined") return;
+    navigator.clipboard.writeText(window.location.href);
+    setLinkCopied(true);
+    toast.success("Link copiado");
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
+
+  const handleAddActivityNote = async () => {
+    const text = activityNote.trim();
+    if (!text) return;
+    setAddingNote(true);
+    try {
+      await fetch(`/api/applications/${application.id}/activities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "note_added", payload: { text } }),
+      });
+      setActivityNote("");
+      onUpdate();
+    } finally {
+      setAddingNote(false);
+    }
+  };
+
+  const activities = (application.activities ?? []) as { id: string; type: string; payload: string | null; createdAt: string }[];
+
   return (
     <div className="space-y-6">
       {editing ? (
@@ -133,10 +201,35 @@ export function ApplicationDetail({
       ) : (
         <Card>
           <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Datos de la postulación</CardTitle>
-            <div className="flex gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 shrink-0" />
+              Datos de la postulación
+            </CardTitle>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleFavorite}
+                className={favorite ? "text-amber-500 border-amber-500" : ""}
+              >
+                <Star className={`h-4 w-4 sm:mr-1 ${favorite ? "fill-current" : ""}`} />
+                <span className="hidden sm:inline">{favorite ? "Quitar destacada" : "Destacar"}</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                <Link2 className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">{linkCopied ? "Link copiado" : "Copiar link"}</span>
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                 Editar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDuplicate}
+                disabled={duplicating}
+              >
+                <Copy className="h-4 w-4 sm:mr-1" />
+                <span className="hidden sm:inline">{duplicating ? "Duplicando…" : "Duplicar postulación"}</span>
               </Button>
               <Button
                 variant="outline"
@@ -225,7 +318,10 @@ export function ApplicationDetail({
 
       <Card>
         <CardHeader>
-          <CardTitle>Checklist</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5 shrink-0" />
+            Checklist
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
@@ -247,7 +343,10 @@ export function ApplicationDetail({
 
       <Card>
         <CardHeader>
-          <CardTitle>Notas</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 shrink-0" />
+            Notas
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <NotesEditor
@@ -264,6 +363,77 @@ export function ApplicationDetail({
       <InteractionList applicationId={application.id} interactions={application.interactions as { id: string; type: string; date: string; responded: boolean; textOrSummary: string | null; outcome: string | null }[]} onUpdate={onUpdate} />
 
       <TaskList applicationId={application.id} tasks={application.tasks as { id: string; title: string; dueAt: string; completed: boolean; type: string }[]} onUpdate={onUpdate} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Actividad
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Textarea
+              placeholder="Añadir nota rápida..."
+              value={activityNote}
+              onChange={(e) => setActivityNote(e.target.value)}
+              className="min-h-[60px] resize-none"
+            />
+            <Button
+              size="sm"
+              onClick={handleAddActivityNote}
+              disabled={!activityNote.trim() || addingNote}
+            >
+              {addingNote ? "Guardando…" : "Añadir"}
+            </Button>
+          </div>
+          {activities.length > 0 ? (
+            <ul className="space-y-2 text-sm border-t pt-4">
+              {activities.map((act) => {
+                let label = act.type;
+                let payloadText = "";
+                if (act.type === "note_added" && act.payload) {
+                  try {
+                    const p = JSON.parse(act.payload) as { text?: string };
+                    payloadText = p.text ?? "";
+                  } catch {
+                    payloadText = act.payload;
+                  }
+                } else if (act.payload) {
+                  try {
+                    const p = JSON.parse(act.payload);
+                    payloadText = typeof p === "string" ? p : JSON.stringify(p);
+                  } catch {
+                    payloadText = act.payload;
+                  }
+                }
+                if (act.type === "note_added") label = "Nota";
+                if (act.type === "status_change") label = "Cambio de estado";
+                return (
+                  <li key={act.id} className="flex flex-col gap-0.5 py-1 border-b border-border last:border-0">
+                    <span className="font-medium text-muted-foreground flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      {label}
+                    </span>
+                    {payloadText && <p className="text-foreground pl-4">{payloadText}</p>}
+                    <span className="text-xs text-muted-foreground pl-4">
+                      {new Date(act.createdAt).toLocaleString("es", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Aún no hay actividad. Añade una nota arriba.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="sm:max-w-md">

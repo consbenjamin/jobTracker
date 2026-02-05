@@ -45,8 +45,19 @@ type Application = {
   externalFormLink?: string | null;
   notes?: string | null;
   cvVersion?: string | null;
+  tags?: string | null;
   [key: string]: unknown;
 };
+
+function parseTags(tags: string | null | undefined): string[] {
+  if (!tags) return [];
+  try {
+    const arr = JSON.parse(tags) as unknown;
+    return Array.isArray(arr) ? arr.filter((t): t is string => typeof t === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export function ApplicationForm({
   application,
@@ -87,6 +98,8 @@ export function ApplicationForm({
   );
   const [notes, setNotes] = useState(application?.notes ?? "");
   const [cvVersion, setCvVersion] = useState(application?.cvVersion ?? "");
+  const [tags, setTags] = useState<string[]>(() => parseTags(application?.tags ?? null));
+  const [tagInput, setTagInput] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -111,6 +124,7 @@ export function ApplicationForm({
             externalFormLink: externalFormLink.trim() || null,
             notes: notes.trim() || null,
             cvVersion: cvVersion.trim() || null,
+            tags: tags.length > 0 ? JSON.stringify(tags) : null,
           }
         : {
             company: company.trim(),
@@ -127,6 +141,7 @@ export function ApplicationForm({
             externalFormLink: externalFormLink.trim() || null,
             notes: notes.trim() || null,
             cvVersion: cvVersion.trim() || null,
+            tags: tags.length > 0 ? JSON.stringify(tags) : null,
           };
       const res = await fetch(url, {
         method,
@@ -293,6 +308,53 @@ export function ApplicationForm({
                   placeholder="Notas..."
                   className="min-h-[80px]"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tags">Etiquetas</Label>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-xs font-medium"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => setTags((t) => t.filter((x) => x !== tag))}
+                        className="hover:text-destructive"
+                        aria-label={`Quitar ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  <Input
+                    id="tags"
+                    className="w-32 min-w-0"
+                    placeholder="Añadir..."
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === ",") {
+                        e.preventDefault();
+                        const v = (e.key === "," ? tagInput.replace(/,/g, "") : tagInput).trim();
+                        if (v && !tags.includes(v)) {
+                          setTags((t) => [...t, v]);
+                          setTagInput("");
+                        } else if (e.key === ",") {
+                          setTagInput((prev) => prev.replace(/,/g, "").trim());
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      const v = tagInput.trim();
+                      if (v && !tags.includes(v)) {
+                        setTags((t) => [...t, v]);
+                        setTagInput("");
+                      }
+                    }}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cvVersion">Versión CV (A/B)</Label>

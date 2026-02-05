@@ -67,19 +67,24 @@ export function Timeline({ application }: { application: AppLike }) {
 
   return (
     <div className="rounded-lg border bg-card p-4">
-      <h3 className="font-semibold mb-4">Timeline</h3>
-      <ul className="space-y-3">
+      <h3 className="font-semibold mb-4 text-base">Timeline</h3>
+      <ul className="space-y-0 relative pl-4 border-l-2 border-muted">
         {events.map((ev, i) => (
-          <li key={i} className="flex gap-3 text-sm">
-            <span className="text-muted-foreground shrink-0 w-24">
-              {new Date(ev.date).toLocaleDateString("es", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </span>
-            <span className="font-medium">{ev.label}</span>
-            {ev.detail && <span className="text-muted-foreground">— {ev.detail}</span>}
+          <li key={i} className="flex gap-3 py-3 first:pt-0 last:pb-0 relative">
+            <span className="absolute -left-[9px] top-4 h-2 w-2 rounded-full bg-primary shrink-0" aria-hidden />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-xs font-medium text-muted-foreground">
+                {new Date(ev.date).toLocaleDateString("es", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
+              <span className="font-medium text-sm">{ev.label}</span>
+              {ev.detail && <span className="text-sm text-muted-foreground">{ev.detail}</span>}
+            </div>
           </li>
         ))}
       </ul>

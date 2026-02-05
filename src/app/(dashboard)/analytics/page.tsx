@@ -15,6 +15,10 @@ import {
   Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/empty-state";
+import { APPLICATION_STATUSES, STATUS_COLORS, STATUS_LABELS } from "@/lib/constants";
+import { BarChart3 } from "lucide-react";
 
 type Application = {
   id: string;
@@ -27,17 +31,7 @@ type Application = {
   [key: string]: unknown;
 };
 
-const STATUS_ORDER = ["Applied", "FollowUp", "Interview", "Rejected", "Offer", "Ghosted"];
-const STATUS_LABELS: Record<string, string> = {
-  Applied: "Aplicado",
-  FollowUp: "Follow-up",
-  Interview: "Entrevista",
-  Rejected: "Rechazado",
-  Offer: "Oferta",
-  Ghosted: "Ghosted",
-};
-
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#6b7280"];
+const STATUS_ORDER = [...APPLICATION_STATUSES];
 
 export default function AnalyticsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -52,8 +46,33 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Cargando analytics...</p>
+      <div className="space-y-6 sm:space-y-8">
+        <div>
+          <Skeleton className="h-8 w-40 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-[280px] min-w-0">
+              <Skeleton className="h-full w-full rounded-lg" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -159,6 +178,26 @@ export default function AnalyticsPage() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
+  if (total === 0) {
+    return (
+      <div className="space-y-6 sm:space-y-8">
+        <div>
+          <h1 className="text-xl font-bold sm:text-2xl">Analytics</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">
+            Postulaciones, tasa de respuesta, funnel y canales.
+          </p>
+        </div>
+        <EmptyState
+          icon={BarChart3}
+          title="Aún no hay datos"
+          description="Añade postulaciones para ver gráficos de funnel, tasa de respuesta y más."
+          actionLabel="Ir a postulaciones"
+          actionHref="/applications"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <div>
@@ -221,16 +260,18 @@ export default function AnalyticsPage() {
           <CardTitle>Postulaciones por mes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[220px] sm:h-[280px] min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthCounts}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--primary))" name="Postulaciones" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-[220px] sm:h-[280px] min-w-0 overflow-x-auto">
+            <div className="h-full min-w-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthCounts}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value: number) => [value, "Postulaciones"]} />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" name="Postulaciones" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -241,20 +282,22 @@ export default function AnalyticsPage() {
             <CardTitle>Funnel por estado</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[220px] sm:h-[280px] min-w-0">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={funnelData} layout="vertical" margin={{ left: 80 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis type="category" dataKey="name" width={70} />
-                  <Tooltip />
+            <div className="h-[220px] sm:h-[280px] min-w-0 overflow-x-auto">
+              <div className="h-full min-w-[240px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={funnelData} layout="vertical" margin={{ left: 80 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={70} />
+                    <Tooltip formatter={(value: number) => [value, "Postulaciones"]} />
                   <Bar dataKey="value" name="Postulaciones" radius={[0, 4, 4, 0]}>
-                    {funnelData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    {funnelData.map((entry, i) => (
+                      <Cell key={i} fill={STATUS_COLORS[entry.status] ?? "#6b7280"} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -266,17 +309,19 @@ export default function AnalyticsPage() {
             {channelData.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8">Sin interacciones aún.</p>
             ) : (
-              <div className="h-[220px] sm:h-[280px] min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={channelData} layout="vertical" margin={{ left: 60 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis type="category" dataKey="name" width={60} />
-                    <Tooltip />
+              <div className="h-[220px] sm:h-[280px] min-w-0 overflow-x-auto">
+                <div className="h-full min-w-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={channelData} layout="vertical" margin={{ left: 60 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" />
+                      <YAxis type="category" dataKey="name" width={60} />
+                      <Tooltip formatter={(value: number, name: string) => [value, name === "responded" ? "Respondieron" : "Total"]} />
                     <Bar dataKey="responded" name="Respondieron" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                     <Bar dataKey="total" name="Total" fill="hsl(var(--muted-foreground))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </div>
             )}
           </CardContent>

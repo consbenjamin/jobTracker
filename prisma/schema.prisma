@@ -31,12 +31,24 @@ model Application {
   notes                String?
   checklist            String?  // JSON: portfolio, formulario, referral
   cvVersion            String?  // A/B para analytics
+  tags                 String?  // JSON array of strings, e.g. ["frontend","remoto"]
+  isFavorite           Boolean  @default(false)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
   contacts     Contact[]
   interactions Interaction[]
   tasks        Task[]
+  activities   Activity[]
+}
+
+model Activity {
+  id             String   @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type           String   // status_change | note_added | created
+  payload        String?  // JSON
+  createdAt      DateTime @default(now())
 }
 
 model Contact {

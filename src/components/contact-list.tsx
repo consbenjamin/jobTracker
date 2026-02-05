@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { ContactFormDialog } from "./contact-form-dialog";
 
 type Contact = {
@@ -29,7 +29,10 @@ export function ContactList({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Contactos</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5 shrink-0" />
+          Contactos
+        </CardTitle>
         <Button size="sm" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4 mr-1" />
           Añadir contacto

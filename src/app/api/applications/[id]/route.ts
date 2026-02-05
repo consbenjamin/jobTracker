@@ -13,6 +13,7 @@ export async function GET(
         contacts: true,
         interactions: { orderBy: { date: "desc" } },
         tasks: { orderBy: { dueAt: "asc" } },
+        activities: { orderBy: { createdAt: "desc" } },
       },
     });
     if (!application) {
@@ -54,6 +55,8 @@ export async function PATCH(
       checklist,
       cvVersion,
       appliedAt,
+      tags,
+      isFavorite,
     } = body;
 
     const data: Record<string, unknown> = {};
@@ -72,6 +75,8 @@ export async function PATCH(
     if (checklist !== undefined) data.checklist = checklist;
     if (cvVersion !== undefined) data.cvVersion = cvVersion;
     if (appliedAt !== undefined) data.appliedAt = new Date(appliedAt);
+    if (tags !== undefined) data.tags = tags;
+    if (isFavorite !== undefined) data.isFavorite = Boolean(isFavorite);
 
     const application = await prisma.application.update({
       where: { id },

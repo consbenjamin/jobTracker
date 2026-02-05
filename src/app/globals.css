@@ -59,4 +59,13 @@
   .container {
     @apply w-full max-w-7xl mx-auto;
   }
+  /* Focus visible para accesibilidad */
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
 }

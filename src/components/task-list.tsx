@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus } from "lucide-react";
+import { Plus, CalendarCheck } from "lucide-react";
 import { TaskFormDialog } from "./task-form-dialog";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -44,7 +44,10 @@ export function TaskList({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Tareas</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <CalendarCheck className="h-5 w-5 shrink-0" />
+          Tareas
+        </CardTitle>
         <Button size="sm" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4 mr-1" />
           Añadir tarea

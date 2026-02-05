@@ -3,9 +3,11 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ApplicationDetail } from "@/components/application-detail";
+import { useFocusMode } from "@/components/focus-mode-context";
 
 type Application = {
   id: string;
@@ -34,6 +36,7 @@ export default function ApplicationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
+  const { focusMode, setFocusMode } = useFocusMode();
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -57,8 +60,14 @@ export default function ApplicationDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Cargando...</p>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+          <Skeleton className="h-10 w-10 rounded-md" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <Skeleton className="h-32 w-full rounded-lg" />
+        <Skeleton className="h-48 w-full rounded-lg" />
+        <Skeleton className="h-24 w-full rounded-lg" />
       </div>
     );
   }
@@ -85,6 +94,25 @@ export default function ApplicationDetailPage() {
         <h1 className="text-lg font-bold min-w-0 break-words sm:text-2xl">
           {application.company} — {application.role}
         </h1>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto shrink-0"
+          onClick={() => setFocusMode(!focusMode)}
+          aria-label={focusMode ? "Salir de modo focus" : "Modo focus"}
+        >
+          {focusMode ? (
+            <>
+              <Minimize2 className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Salir modo focus</span>
+            </>
+          ) : (
+            <>
+              <Maximize2 className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Modo focus</span>
+            </>
+          )}
+        </Button>
       </div>
       <ApplicationDetail application={application} onUpdate={refresh} />
     </div>
