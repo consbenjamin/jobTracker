@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ApplicationStatus: Applied | FollowUp | Interview | Rejected | Offer | Ghosted
+// Source: LinkedIn | Otra
+// Modality: remoto | hibrido | presencial
+// ContactChannel: LinkedIn | email
+// InteractionType: linkedin | email | call
+// TaskType: follow_up | email | call
+
+model Application {
+  id                   String   @id @default(cuid())
+  company              String
+  role                 String
+  offerLink            String?
+  source               String   @default("LinkedIn") // LinkedIn | Otra
+  appliedAt            DateTime @default(now())
+  status               String   @default("Applied") // Applied | FollowUp | Interview | Rejected | Offer | Ghosted
+  seniority            String?
+  modality             String?  // remoto | hibrido | presencial
+  expectedSalary       Float?
+  requiredStack        String?
+  requiresExternalForm Boolean  @default(false)
+  externalFormLink     String?
+  notes                String?
+  checklist            String?  // JSON: portfolio, formulario, referral
+  cvVersion            String?  // A/B para analytics
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  contacts     Contact[]
+  interactions Interaction[]
+  tasks        Task[]
+}
+
+model Contact {
+  id             String   @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  name           String
+  position       String?
+  channel        String   @default("LinkedIn") // LinkedIn | email
+  link           String?
+  notes          String?
+}
+
+model Interaction {
+  id             String   @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type           String   // linkedin | email | call
+  date           DateTime @default(now())
+  responded      Boolean  @default(false)
+  textOrSummary  String?
+  outcome        String?
+}
+
+model Task {
+  id             String   @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  title          String
+  dueAt          DateTime
+  completed      Boolean  @default(false)
+  type           String   @default("follow_up") // follow_up | email | call
+}
