@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -52,6 +54,7 @@ type SearchResult = { id: string; company: string; role: string };
 export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: React.RefObject<HTMLInputElement | null> }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { data: session, status } = useSession();
   const internalSearchRef = useRef<HTMLInputElement>(null);
   const searchInputRef = externalSearchRef ?? internalSearchRef;
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -120,15 +123,15 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background">
-      <div className="container flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
+      <div className="w-full max-w-7xl mx-auto flex h-14 items-center justify-between gap-2 sm:gap-4 px-4 sm:px-6 min-w-0">
         <Link href="/" className="flex shrink-0 items-center gap-2 font-semibold">
           <Briefcase className="h-6 w-6" />
           Job Tracker
         </Link>
 
         {/* Desktop: search + nav */}
-        <div className="hidden md:flex items-center gap-2 flex-1 max-w-md justify-center">
-          <div className="relative w-full max-w-xs" ref={searchContainerRef}>
+        <div className="hidden md:flex items-center gap-2 flex-1 max-w-md justify-center min-w-0">
+          <div className="relative w-full max-w-xs min-w-0" ref={searchContainerRef}>
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               ref={searchInputRef as React.RefObject<HTMLInputElement>}
@@ -162,7 +165,7 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
         </div>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-4">
+        <nav className="hidden md:flex items-center gap-2 lg:gap-4 shrink-0">
           {navItems.map(({ href, label, icon: Icon }) => (
             <NavLink
               key={href}
@@ -175,6 +178,21 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
         </nav>
 
         <div className="flex items-center gap-2">
+          {status === "authenticated" && session?.user && (
+            <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[120px]">
+              {session.user.email ?? session.user.name ?? "Usuario"}
+            </span>
+          )}
+          {status === "authenticated" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              aria-label="Cerrar sesión"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
+          )}
           <ThemeToggle />
           <Button
             variant="ghost"
@@ -190,7 +208,7 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-border bg-background px-4 py-4">
+        <div className="md:hidden border-t border-border bg-background w-full max-w-7xl mx-auto px-4 py-4 min-w-0">
           <nav className="flex flex-col gap-1">
             {navItems.map(({ href, label, icon: Icon }) => (
               <NavLink

@@ -23,7 +23,11 @@ export function FocusModeProvider({ children }: { children: ReactNode }) {
         <PwaRegister />
         <Toaster position="bottom-right" richColors closeButton />
         {!focusMode && <Nav />}
-        <main className="min-h-screen p-4 sm:p-6 bg-background overflow-x-hidden">{children}</main>
+        <main className="min-h-screen bg-background overflow-x-hidden">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 min-w-0">
+          {children}
+        </div>
+      </main>
       </ThemeProvider>
     </FocusModeContext.Provider>
   );

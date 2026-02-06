@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/auth";
+
+async function interactionBelongsToUser(interactionId: string, userId: string): Promise<boolean> {
+  const interaction = await prisma.interaction.findUnique({
+    where: { id: interactionId },
+    include: { application: { select: { userId: true } } },
+  });
+  return interaction?.application?.userId === userId;
+}
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
+    const ok = await interactionBelongsToUser(id, userId);
+    if (!ok) return NextResponse.json({ error: "Interacción no encontrada" }, { status: 404 });
+
     const body = await request.json();
     const data: Record<string, unknown> = {};
     if (body.type !== undefined) data.type = body.type;
@@ -27,7 +42,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
+    const ok = await interactionBelongsToUser(id, userId);
+    if (!ok) return NextResponse.json({ error: "Interacción no encontrada" }, { status: 404 });
+
     await prisma.interaction.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (error) {

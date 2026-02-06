@@ -6,5 +6,31 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0f172a",
-  "lang": "es"
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icon-light.png",
+      "sizes": "800x800",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-dark.png",
+      "sizes": "800x800",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-light.png",
+      "sizes": "800x800",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-dark.png",
+      "sizes": "800x800",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
 }

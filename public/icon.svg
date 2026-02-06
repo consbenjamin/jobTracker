@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Briefcase minimal: lid, handle, body. No background. -->
+  <rect x="64" y="176" width="384" height="272" rx="12" fill="#0f172a"/>
+  <rect x="48" y="112" width="416" height="80" rx="12" fill="#0f172a"/>
+  <rect x="196" y="48" width="120" height="80" rx="12" fill="#0f172a"/>
+</svg>

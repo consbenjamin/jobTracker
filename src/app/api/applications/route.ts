@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/auth";
 
 function escapeCsvCell(value: string | null | undefined): string {
   if (value == null) return "";
@@ -12,6 +13,9 @@ function escapeCsvCell(value: string | null | undefined): string {
 
 export async function GET(request: NextRequest) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const exportCsv = searchParams.get("export") === "csv";
     const search = searchParams.get("search");
@@ -55,6 +59,7 @@ export async function GET(request: NextRequest) {
     if (isFavoriteParam === "true" || isFavoriteParam === "1") {
       andParts.push({ isFavorite: true });
     }
+    andParts.push({ userId });
     const where = andParts.length > 0 ? { AND: andParts } : {};
 
     const applications = await prisma.application.findMany({
@@ -93,6 +98,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const body = await request.json();
     const {
       company,
@@ -123,6 +131,7 @@ export async function POST(request: NextRequest) {
 
     const application = await prisma.application.create({
       data: {
+        userId,
         company,
         role,
         offerLink: offerLink ?? null,

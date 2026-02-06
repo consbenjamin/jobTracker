@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
-    const application = await prisma.application.findUnique({
-      where: { id },
+    const application = await prisma.application.findFirst({
+      where: { id, userId },
       include: {
         contacts: true,
         interactions: { orderBy: { date: "desc" } },
@@ -37,6 +41,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
     const body = await request.json();
     const {
@@ -78,11 +85,23 @@ export async function PATCH(
     if (tags !== undefined) data.tags = tags;
     if (isFavorite !== undefined) data.isFavorite = Boolean(isFavorite);
 
-    const application = await prisma.application.update({
-      where: { id },
+    const application = await prisma.application.updateMany({
+      where: { id, userId },
       data,
     });
-    return NextResponse.json(application);
+    if (application.count === 0) {
+      return NextResponse.json({ error: "Postulación no encontrada" }, { status: 404 });
+    }
+    const updated = await prisma.application.findFirst({
+      where: { id, userId },
+      include: {
+        contacts: true,
+        interactions: { orderBy: { date: "desc" } },
+        tasks: { orderBy: { dueAt: "asc" } },
+        activities: { orderBy: { createdAt: "desc" } },
+      },
+    });
+    return NextResponse.json(updated);
   } catch (error) {
     console.error(error);
     return NextResponse.json(
@@ -97,9 +116,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
-    await prisma.application.delete({ where: { id } });
-    return NextResponse.json({ ok: true });
+    const deleted = await prisma.application.deleteMany({ where: { id, userId } });
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: "Postulación no encontrada" }, { status: 404 });
+    }
+    return NextResponse.json({ ok: true } as const);
   } catch (error) {
     console.error(error);
     return NextResponse.json(

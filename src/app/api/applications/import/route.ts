@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/auth";
 
 function parseCsv(text: string): Record<string, string>[] {
   const lines = text.trim().split(/\r?\n/);
@@ -33,6 +34,9 @@ function parseCsv(text: string): Record<string, string>[] {
 
 export async function POST(request: NextRequest) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     let csvText: string;
     const contentType = request.headers.get("content-type") ?? "";
     if (contentType.includes("multipart/form-data")) {
@@ -67,6 +71,7 @@ export async function POST(request: NextRequest) {
       try {
         const app = await prisma.application.create({
           data: {
+            userId,
             company,
             role,
             offerLink: (r.offerLink ?? r.offer_link ?? "").trim() || null,

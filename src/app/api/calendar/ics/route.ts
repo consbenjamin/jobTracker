@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createEvents, type EventAttributes } from "ics";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const applications = await prisma.application.findMany({
+      where: { userId },
       include: { tasks: true },
     });
     const events: EventAttributes[] = [];

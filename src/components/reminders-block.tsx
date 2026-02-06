@@ -86,12 +86,12 @@ export function RemindersBlock() {
             <Bell className="h-5 w-5 shrink-0" />
             Recordatorios
           </CardTitle>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={openSettings} aria-label="Configurar recordatorios">
+          <div className="flex flex-wrap gap-2 min-w-0">
+            <Button variant="ghost" size="sm" onClick={openSettings} aria-label="Configurar recordatorios" className="shrink-0">
               <Settings className="h-4 w-4" />
             </Button>
-            <Button asChild variant="outline" size="sm" className="shrink-0">
-              <Link href="/applications" className="flex justify-center">Ver postulaciones</Link>
+            <Button asChild variant="outline" size="sm" className="w-full min-w-0 sm:w-auto shrink-0">
+              <Link href="/applications" className="flex items-center justify-center min-w-0">Ver postulaciones</Link>
             </Button>
           </div>
         </CardHeader>
@@ -145,12 +145,12 @@ export function RemindersBlock() {
           <Bell className="h-5 w-5 shrink-0" />
           Recordatorios
         </CardTitle>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={openSettings} aria-label="Configurar recordatorios">
+        <div className="flex flex-wrap gap-2 min-w-0">
+          <Button variant="ghost" size="sm" onClick={openSettings} aria-label="Configurar recordatorios" className="shrink-0">
             <Settings className="h-4 w-4" />
           </Button>
-          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto shrink-0">
-            <Link href="/applications" className="flex justify-center">Ver postulaciones</Link>
+          <Button asChild variant="outline" size="sm" className="w-full min-w-0 sm:w-auto shrink-0">
+            <Link href="/applications" className="flex items-center justify-center min-w-0">Ver postulaciones</Link>
           </Button>
         </div>
       </CardHeader>

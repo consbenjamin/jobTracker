@@ -180,7 +180,7 @@ export default function AnalyticsPage() {
 
   if (total === 0) {
     return (
-      <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-6 sm:space-y-8 min-w-0">
         <div>
           <h1 className="text-xl font-bold sm:text-2xl">Analytics</h1>
           <p className="text-muted-foreground text-sm sm:text-base">
@@ -199,7 +199,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 min-w-0">
       <div>
         <h1 className="text-xl font-bold sm:text-2xl">Analytics</h1>
         <p className="text-muted-foreground text-sm sm:text-base">

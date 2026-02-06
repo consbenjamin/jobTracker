@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
-    const source = await prisma.application.findUnique({
-      where: { id },
+    const source = await prisma.application.findFirst({
+      where: { id, userId },
     });
     if (!source) {
       return NextResponse.json(
@@ -19,6 +23,7 @@ export async function POST(
 
     const duplicate = await prisma.application.create({
       data: {
+        userId,
         company: source.company,
         role: source.role,
         offerLink: source.offerLink,

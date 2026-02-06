@@ -164,7 +164,7 @@ export default function ApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6 min-w-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-10 w-full sm:w-40" />
@@ -201,7 +201,7 @@ export default function ApplicationsPage() {
 
   if (applications.length === 0) {
     return (
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6 min-w-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-xl font-bold sm:text-2xl">Postulaciones</h1>
           <Button asChild className="w-full sm:w-auto">

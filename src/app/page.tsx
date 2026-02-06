@@ -45,7 +45,7 @@ export default function HomePage() {
   const favorites = applications.filter((a) => a.isFavorite).slice(0, 10);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6 sm:space-y-8 min-w-0">
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Job Tracker</h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
@@ -132,8 +132,8 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild>
-              <Link href="/applications">Ver postulaciones</Link>
+            <Button asChild className="w-full min-w-0 sm:w-auto">
+              <Link href="/applications" className="flex items-center justify-center min-w-0">Ver postulaciones</Link>
             </Button>
           </CardContent>
         </Card>
@@ -148,8 +148,8 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline">
-              <Link href="/quick-capture">Nueva postulación</Link>
+            <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
+              <Link href="/quick-capture" className="flex items-center justify-center min-w-0">Nueva postulación</Link>
             </Button>
           </CardContent>
         </Card>
@@ -164,8 +164,8 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline">
-              <Link href="/analytics">Ver analytics</Link>
+            <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
+              <Link href="/analytics" className="flex items-center justify-center min-w-0">Ver analytics</Link>
             </Button>
           </CardContent>
         </Card>

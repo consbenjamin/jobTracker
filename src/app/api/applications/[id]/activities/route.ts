@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getSessionUserId } from "@/lib/auth";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
+    const app = await prisma.application.findFirst({
+      where: { id, userId },
+      select: { id: true },
+    });
+    if (!app) return NextResponse.json({ error: "Postulación no encontrada" }, { status: 404 });
+
     const activities = await prisma.activity.findMany({
       where: { applicationId: id },
       orderBy: { createdAt: "desc" },
@@ -26,8 +36,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const userId = await getSessionUserId();
+    if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
     const { id } = await params;
-    const app = await prisma.application.findUnique({ where: { id } });
+    const app = await prisma.application.findFirst({
+      where: { id, userId },
+    });
     if (!app) {
       return NextResponse.json(
         { error: "Postulación no encontrada" },
