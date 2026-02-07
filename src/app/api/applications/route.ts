@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
       const term = search.trim();
       andParts.push({
         OR: [
-          { company: { contains: term } },
-          { role: { contains: term } },
+          { company: { contains: term, mode: "insensitive" } },
+          { role: { contains: term, mode: "insensitive" } },
         ],
       });
     }

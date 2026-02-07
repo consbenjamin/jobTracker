@@ -68,9 +68,11 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchRequestQueryRef = useRef<string>("");
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -101,14 +103,30 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
+      setSearchLoading(false);
       return;
     }
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     searchDebounceRef.current = setTimeout(() => {
-      fetch(`/api/applications?search=${encodeURIComponent(searchQuery.trim())}`)
-        .then((res) => res.json())
-        .then((data: SearchResult[]) => setSearchResults(data.slice(0, 8)))
-        .catch(() => setSearchResults([]));
+      const query = searchQuery.trim();
+      searchRequestQueryRef.current = query;
+      setSearchLoading(true);
+      fetch(`/api/applications?search=${encodeURIComponent(query)}`)
+        .then((res) => res.json().then((data: unknown) => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          if (searchRequestQueryRef.current !== query) return;
+          setSearchLoading(false);
+          if (!ok || !Array.isArray(data)) {
+            setSearchResults([]);
+            return;
+          }
+          setSearchResults((data as SearchResult[]).slice(0, 8));
+        })
+        .catch(() => {
+          if (searchRequestQueryRef.current !== query) return;
+          setSearchLoading(false);
+          setSearchResults([]);
+        });
     }, 300);
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -154,19 +172,29 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
               className="pl-8 h-9 bg-muted/50"
               aria-label="Buscar postulaciones"
             />
-            {searchOpen && searchResults.length > 0 && (
+            {searchOpen && searchQuery.trim() && (
               <div className="absolute top-full left-0 right-0 mt-1 rounded-md border bg-popover shadow-md py-1 z-50 max-h-64 overflow-auto">
-                {searchResults.map((app) => (
-                  <Link
-                    key={app.id}
-                    href={`/applications/${app.id}`}
-                    className="block px-3 py-2 text-sm hover:bg-accent"
-                    onClick={() => setSearchOpen(false)}
-                  >
-                    <span className="font-medium">{app.company}</span>
-                    <span className="text-muted-foreground"> — {app.role}</span>
-                  </Link>
-                ))}
+                {searchLoading ? (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    Buscando…
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((app) => (
+                    <Link
+                      key={app.id}
+                      href={`/applications/${app.id}`}
+                      className="block px-3 py-2 text-sm hover:bg-accent"
+                      onClick={() => setSearchOpen(false)}
+                    >
+                      <span className="font-medium">{app.company}</span>
+                      <span className="text-muted-foreground"> — {app.role}</span>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    Sin resultados
+                  </div>
+                )}
               </div>
             )}
           </div>
