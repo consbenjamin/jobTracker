@@ -37,6 +37,10 @@ export function FocusModeProvider({ children }: { children: ReactNode }) {
         {!focusMode && !isAuthPage && !isLanding && <Nav />}
         {isAuthPage ? (
           <div className="min-h-screen">{children}</div>
+        ) : isLanding ? (
+          <main className="min-h-screen bg-background overflow-x-hidden">
+            {children}
+          </main>
         ) : (
           <main className="min-h-screen bg-background overflow-x-hidden">
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 min-w-0">

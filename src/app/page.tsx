@@ -52,8 +52,14 @@ function DashboardContent() {
     fetch("/api/applications")
       .then((res) => res.json())
       .then(setApplications)
+      .catch(() => setApplications([]))
       .finally(() => setLoading(false));
   }, []);
+
+  // Skeleton solo cuando ya estamos autenticados y cargando datos del dashboard
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   const activeCount = applications.filter(
     (a) => a.status !== "Rejected" && a.status !== "Ghosted"
@@ -79,8 +85,7 @@ function DashboardContent() {
           Seguimiento de postulaciones, contactos e interacciones.
         </p>
       </div>
-      {!loading && (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -118,8 +123,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
         </div>
-      )}
-      {!loading && favorites.length > 0 && (
+      {favorites.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2 flex-wrap">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -210,11 +214,9 @@ function DashboardContent() {
 export default function HomePage() {
   const { status } = useSession();
 
-  if (status === "loading") {
-    return <DashboardSkeleton />;
-  }
-
-  if (status === "unauthenticated") {
+  // Mientras se resuelve la sesión o si no hay sesión: mostrar landing.
+  // Así no se muestra el dashboard/skeleton a usuarios no logueados ni carga infinita.
+  if (status === "loading" || status === "unauthenticated") {
     return <LandingPage />;
   }
 

@@ -78,3 +78,110 @@
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 }
+
+/* Landing futurista */
+.landing-wrap {
+  --landing-glow: 173 80% 40%;
+  --landing-glow-2: 160 84% 39%;
+  --landing-card-bg: hsl(222 47% 11% / 0.4);
+  --landing-card-border: hsl(217 33% 17% / 0.8);
+  --landing-grid: hsl(217 33% 17% / 0.15);
+}
+:root .landing-wrap {
+  --landing-card-bg: hsl(0 0% 100% / 0.6);
+  --landing-card-border: hsl(214 32% 91% / 0.9);
+  --landing-grid: hsl(214 32% 91% / 0.5);
+}
+/* Dark: cards más legibles, grid y bordes visibles */
+.dark .landing-wrap {
+  --landing-card-bg: hsl(217 33% 18% / 0.85);
+  --landing-card-border: hsl(215 28% 28% / 0.9);
+  --landing-grid: hsl(215 25% 27% / 0.4);
+}
+.landing-wrap .landing-grid-bg {
+  background-image:
+    linear-gradient(var(--landing-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--landing-grid) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+.landing-wrap .landing-glow-orb {
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--landing-glow) / 0.25), transparent 60%);
+}
+.dark .landing-wrap .landing-glow-orb {
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--landing-glow) / 0.2), transparent 55%);
+}
+.landing-wrap .landing-card {
+  background: var(--landing-card-bg);
+  border: 1px solid var(--landing-card-border);
+  backdrop-filter: blur(12px);
+}
+.dark .landing-wrap .landing-card {
+  box-shadow: 0 0 0 1px hsl(215 28% 28% / 0.6);
+}
+.landing-wrap .landing-card:hover {
+  border-color: hsl(var(--landing-glow) / 0.5);
+  box-shadow: 0 0 24px -8px hsl(var(--landing-glow) / 0.25);
+}
+.dark .landing-wrap .landing-card:hover {
+  border-color: hsl(var(--landing-glow) / 0.6);
+  box-shadow: 0 0 28px -6px hsl(var(--landing-glow) / 0.3);
+}
+.landing-wrap .landing-cta {
+  background: linear-gradient(135deg, hsl(var(--landing-glow)), hsl(var(--landing-glow-2)));
+  box-shadow: 0 4px 24px -4px hsl(var(--landing-glow) / 0.4);
+  color: #fff;
+}
+.landing-wrap .landing-cta:hover {
+  box-shadow: 0 8px 32px -4px hsl(var(--landing-glow) / 0.5);
+  color: #fff;
+}
+.landing-wrap .landing-badge {
+  background: hsl(var(--landing-glow) / 0.15);
+  border: 1px solid hsl(var(--landing-glow) / 0.35);
+  color: hsl(var(--landing-glow));
+}
+.dark .landing-wrap .landing-badge {
+  background: hsl(var(--landing-glow) / 0.2);
+  border-color: hsl(var(--landing-glow) / 0.5);
+  color: hsl(173 75% 60%);
+}
+.landing-wrap .landing-text-gradient {
+  background: linear-gradient(135deg, hsl(var(--foreground)) 0%, hsl(var(--muted-foreground)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark .landing-wrap .landing-text-gradient {
+  background: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(213 25% 78%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+/* Icono en cards: en dark usar accent cyan en lugar de primary */
+.landing-wrap .landing-card .landing-icon-wrap {
+  background: hsl(var(--landing-glow) / 0.15);
+  color: hsl(var(--landing-glow));
+}
+.dark .landing-wrap .landing-card .landing-icon-wrap {
+  background: hsl(var(--landing-glow) / 0.25);
+  color: hsl(173 75% 60%);
+}
+.landing-wrap .landing-accent-line {
+  width: 3px;
+  background: linear-gradient(180deg, hsl(var(--landing-glow)), hsl(var(--landing-glow-2)));
+  border-radius: 2px;
+}
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.landing-wrap .animate-float {
+  animation: landing-float 4s ease-in-out infinite;
+}
+@keyframes landing-pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+.landing-wrap .animate-pulse-glow {
+  animation: landing-pulse-glow 3s ease-in-out infinite;
+}

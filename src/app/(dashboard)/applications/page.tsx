@@ -16,8 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Briefcase, LayoutGrid, List, Search, X, Download, Star, Upload, Calendar } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { PlusCircle, Briefcase, LayoutGrid, List, Search, X, Download, Star, Upload, Calendar, RotateCcw } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -105,6 +104,15 @@ export default function ApplicationsPage() {
     setFavoriteFilter(false);
     setTagsFilter([]);
   };
+
+  const hasActiveFilters =
+    !!companyFilter ||
+    !!roleFilter ||
+    statusFilter !== "all" ||
+    !!fromDate ||
+    !!toDate ||
+    favoriteFilter ||
+    effectiveTagsFilter.length > 0;
 
   useEffect(() => {
     fetch("/api/applications")
@@ -366,20 +374,39 @@ export default function ApplicationsPage() {
                 </Select>
               </div>
             )}
-            <div className="flex items-center gap-2 flex-wrap sm:col-span-2 md:col-span-1">
-              <Checkbox
-                id="favoriteFilter"
-                checked={favoriteFilter}
-                onCheckedChange={(v) => setFavoriteFilter(!!v)}
-              />
-              <Label htmlFor="favoriteFilter" className="text-sm flex items-center gap-1 cursor-pointer shrink-0">
-                <Star className="h-4 w-4" />
-                Solo favoritas
-              </Label>
-              <Button variant="ghost" size="sm" onClick={clearFilters} className="shrink-0">
-                <X className="h-4 w-4 mr-1" />
-                Limpiar
-              </Button>
+            <div className="flex flex-col gap-1 min-w-0 sm:col-span-2 md:col-span-1">
+              <span className="text-xs text-muted-foreground">Favoritas</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant={favoriteFilter ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setFavoriteFilter((v) => !v)}
+                  className={`shrink-0 h-9 gap-1.5 font-medium transition-colors ${
+                    favoriteFilter
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 dark:bg-amber-500/20 border-amber-500/30 hover:bg-amber-500/25 dark:hover:bg-amber-500/25"
+                      : ""
+                  }`}
+                  aria-pressed={favoriteFilter}
+                  aria-label={favoriteFilter ? "Quitar filtro favoritas" : "Solo favoritas"}
+                >
+                  <Star className={`h-4 w-4 shrink-0 ${favoriteFilter ? "fill-amber-500 text-amber-500" : "text-muted-foreground"}`} />
+                  Solo favoritas
+                </Button>
+                {hasActiveFilters && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="shrink-0 h-9 gap-1.5 text-muted-foreground hover:text-foreground border-dashed"
+                    aria-label="Limpiar todos los filtros"
+                  >
+                    <RotateCcw className="h-4 w-4 shrink-0" />
+                    Limpiar filtros
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -389,8 +416,8 @@ export default function ApplicationsPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
             <p className="text-sm text-muted-foreground">Ningún resultado con estos filtros.</p>
-            <Button variant="outline" size="sm" onClick={clearFilters}>
-              <X className="h-4 w-4 mr-1" />
+            <Button variant="outline" size="sm" onClick={clearFilters} className="gap-1.5">
+              <RotateCcw className="h-4 w-4 shrink-0" />
               Limpiar filtros
             </Button>
           </CardContent>

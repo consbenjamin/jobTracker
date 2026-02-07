@@ -238,7 +238,10 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={async () => {
+                    await signOut({ redirect: false, callbackUrl: "/login" });
+                    window.location.href = "/login";
+                  }}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
@@ -252,7 +255,10 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
               variant="ghost"
               size="icon"
               className="sm:hidden"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={async () => {
+              await signOut({ redirect: false, callbackUrl: "/login" });
+              window.location.href = "/login";
+            }}
               aria-label="Cerrar sesión"
             >
               <LogOut className="h-4 w-4" />
