@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { createEvents, type EventAttributes } from "ics";
 import { getSessionUserId } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const userId = await getSessionUserId();

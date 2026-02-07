@@ -1,4 +1,5 @@
 import { handlers } from "@/lib/auth";
+import type { NextRequest } from "next/server";
 
 const SAFE_CALLBACK = "/";
 
@@ -26,8 +27,8 @@ function buildRedirectToHome(req: Request, res: Response): Response {
 }
 
 async function wrapHandler(
-  handler: (req: Request) => Promise<Response>,
-  req: Request
+  handler: (req: NextRequest) => Promise<Response>,
+  req: NextRequest
 ): Promise<Response> {
   const res = await handler(req);
   const base = new URL(req.url).origin;
@@ -83,10 +84,10 @@ async function wrapHandler(
   return res;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   return wrapHandler(handlers.GET, req);
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   return wrapHandler(handlers.POST, req);
 }

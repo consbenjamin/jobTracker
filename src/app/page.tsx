@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Briefcase, BarChart3, PlusCircle, TrendingUp, Calendar, Award, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RemindersBlock } from "@/components/reminders-block";
+import { LandingPage } from "@/components/landing-page";
 
 type Application = {
   id: string;
@@ -17,7 +20,31 @@ type Application = {
   [key: string]: unknown;
 };
 
-export default function HomePage() {
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 sm:space-y-8 min-w-0">
+      <div>
+        <Skeleton className="h-8 w-48 sm:w-64" />
+        <Skeleton className="h-4 w-full max-w-md mt-2" />
+      </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-24" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-3 w-32" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashboardContent() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -57,7 +84,7 @@ export default function HomePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
+                <TrendingUp className="h-4 w-4 shrink-0" />
                 Activas
               </CardTitle>
             </CardHeader>
@@ -69,7 +96,7 @@ export default function HomePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4 shrink-0" />
                 En proceso (7 días)
               </CardTitle>
             </CardHeader>
@@ -81,7 +108,7 @@ export default function HomePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <Award className="h-4 w-4" />
+                <Award className="h-4 w-4 shrink-0" />
                 Ofertas
               </CardTitle>
             </CardHeader>
@@ -94,9 +121,9 @@ export default function HomePage() {
       )}
       {!loading && favorites.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2 flex-wrap">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+              <Star className="h-5 w-5 text-amber-500 fill-amber-500 shrink-0" />
               Destacadas
             </CardTitle>
             <Button asChild variant="outline" size="sm">
@@ -109,7 +136,7 @@ export default function HomePage() {
                 <li key={app.id}>
                   <Link
                     href={`/applications/${app.id}`}
-                    className="text-primary hover:underline font-medium"
+                    className="text-primary hover:underline font-medium break-words"
                   >
                     {app.company} — {app.role}
                   </Link>
@@ -124,7 +151,7 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5" />
+              <Briefcase className="h-5 w-5 shrink-0" />
               Postulaciones
             </CardTitle>
             <CardDescription>
@@ -133,14 +160,16 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full min-w-0 sm:w-auto">
-              <Link href="/applications" className="flex items-center justify-center min-w-0">Ver postulaciones</Link>
+              <Link href="/applications" className="flex items-center justify-center min-w-0">
+                Ver postulaciones
+              </Link>
             </Button>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <PlusCircle className="h-5 w-5" />
+              <PlusCircle className="h-5 w-5 shrink-0" />
               Captura rápida
             </CardTitle>
             <CardDescription>
@@ -149,14 +178,16 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
-              <Link href="/quick-capture" className="flex items-center justify-center min-w-0">Nueva postulación</Link>
+              <Link href="/quick-capture" className="flex items-center justify-center min-w-0">
+                Nueva postulación
+              </Link>
             </Button>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
+              <BarChart3 className="h-5 w-5 shrink-0" />
               Analytics
             </CardTitle>
             <CardDescription>
@@ -165,11 +196,27 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
-              <Link href="/analytics" className="flex items-center justify-center min-w-0">Ver analytics</Link>
+              <Link href="/analytics" className="flex items-center justify-center min-w-0">
+                Ver analytics
+              </Link>
             </Button>
           </CardContent>
         </Card>
       </div>
     </div>
   );
+}
+
+export default function HomePage() {
+  const { status } = useSession();
+
+  if (status === "loading") {
+    return <DashboardSkeleton />;
+  }
+
+  if (status === "unauthenticated") {
+    return <LandingPage />;
+  }
+
+  return <DashboardContent />;
 }

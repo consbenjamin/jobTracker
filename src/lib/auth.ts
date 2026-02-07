@@ -61,13 +61,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     redirect({ url, baseUrl }) {
       const u = typeof url === "string" ? url.trim() : "";
       if (!u || u === "[]" || u === "null" || u === "undefined") return baseUrl;
-      if (u.startsWith("/") && !u.startsWith("//")) return `${baseUrl}${u}`;
+      // Rechazar URLs con "[]" en la ruta (bug conocido con algunos providers, ej. GitHub)
+      if (u.includes("[]")) return baseUrl;
+      if (u.startsWith("/") && !u.startsWith("//")) {
+        const path = u;
+        if (path === "[]" || path.startsWith("[]") || path === "/[]") return baseUrl;
+        return `${baseUrl}${path}`;
+      }
       try {
-        if (new URL(u).origin === new URL(baseUrl).origin) return u;
+        const parsed = new URL(u);
+        if (parsed.origin !== new URL(baseUrl).origin) return baseUrl;
+        if (parsed.pathname === "" || parsed.pathname === "[]" || parsed.pathname === "/[]") return baseUrl;
+        return u;
       } catch {
         return baseUrl;
       }
-      return baseUrl;
     },
   },
 });

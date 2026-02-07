@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   Default: "Algo salió mal al iniciar sesión.",
 };
 
-export default function AuthErrorPage() {
+function AuthErrorInner() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error") ?? "Default";
   const message = ERROR_MESSAGES[error] ?? ERROR_MESSAGES.Default;
@@ -43,5 +44,24 @@ export default function AuthErrorPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Error al iniciar sesión</CardTitle>
+              <CardDescription>Cargando…</CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      }
+    >
+      <AuthErrorInner />
+    </Suspense>
   );
 }

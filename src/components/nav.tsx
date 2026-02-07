@@ -5,11 +5,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut } from "lucide-react";
+import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
   { href: "/", label: "Inicio", icon: LayoutDashboard },
@@ -177,16 +185,45 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0 shrink-0">
           {status === "authenticated" && session?.user && (
-            <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[120px]">
-              {session.user.email ?? session.user.name ?? "Usuario"}
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hidden sm:flex items-center gap-2 max-w-[200px] min-w-0"
+                  aria-label="Menú de cuenta"
+                >
+                  <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm text-muted-foreground">
+                    {session.user.email ?? session.user.name ?? "Usuario"}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel className="font-normal">
+                  <p className="text-xs text-muted-foreground mb-0.5">Sesión</p>
+                  <p className="text-sm font-medium truncate" title={session.user.email ?? undefined}>
+                    {session.user.email ?? session.user.name ?? "Usuario"}
+                  </p>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {status === "authenticated" && (
             <Button
               variant="ghost"
               size="icon"
+              className="sm:hidden"
               onClick={() => signOut({ callbackUrl: "/login" })}
               aria-label="Cerrar sesión"
             >

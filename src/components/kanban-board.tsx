@@ -2,6 +2,7 @@
 
 import { APPLICATION_STATUSES, STATUS_COLORS, STATUS_LABELS } from "@/lib/constants";
 import { ApplicationCard } from "@/components/application-card";
+import { toast } from "sonner";
 
 type Application = {
   id: string;
@@ -18,9 +19,11 @@ type Application = {
 export function KanbanBoard({
   applications,
   onUpdate,
+  onOptimisticStatusChange,
 }: {
   applications: Application[];
   onUpdate: () => void;
+  onOptimisticStatusChange?: (id: string, updates: { status: string }) => void;
 }) {
   const byStatus = APPLICATION_STATUSES.map((status) => ({
     status,
@@ -28,13 +31,26 @@ export function KanbanBoard({
     apps: applications.filter((a) => a.status === status),
   }));
 
-  const updateStatus = async (id: string, status: string) => {
-    await fetch(`/api/applications/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    onUpdate();
+  const updateStatus = async (id: string, newStatus: string) => {
+    const app = applications.find((a) => a.id === id);
+    const previousStatus = app?.status;
+    onOptimisticStatusChange?.(id, { status: newStatus });
+    try {
+      const res = await fetch(`/api/applications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        if (previousStatus !== undefined) onOptimisticStatusChange?.(id, { status: previousStatus });
+        toast.error("No se pudo actualizar el estado");
+        return;
+      }
+      onUpdate();
+    } catch {
+      if (previousStatus !== undefined) onOptimisticStatusChange?.(id, { status: previousStatus });
+      toast.error("Error de red");
+    }
   };
 
   return (

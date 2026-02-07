@@ -116,12 +116,18 @@ export default function ApplicationsPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const refresh = () => {
-    setLoading(true);
+  const refresh = (showLoading = true) => {
+    if (showLoading) setLoading(true);
     fetch("/api/applications")
       .then((res) => res.json())
       .then(setApplications)
       .finally(() => setLoading(false));
+  };
+
+  const updateOneInList = (id: string, updates: Partial<Application>) => {
+    setApplications((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, ...updates } : a))
+    );
   };
 
   const handleImport = async () => {
@@ -391,11 +397,19 @@ export default function ApplicationsPage() {
         </Card>
       ) : viewMode === "list" ? (
         <div className="min-w-0 overflow-x-auto">
-          <ApplicationsTable applications={filtered} onUpdate={refresh} />
+          <ApplicationsTable
+            applications={filtered}
+            onUpdate={() => refresh(false)}
+            onOptimisticStatusChange={updateOneInList}
+          />
         </div>
       ) : (
         <div className="min-w-0 -mx-1 px-1 sm:mx-0 sm:px-0">
-          <KanbanBoard applications={filtered} onUpdate={refresh} />
+          <KanbanBoard
+            applications={filtered}
+            onUpdate={() => refresh(false)}
+            onOptimisticStatusChange={updateOneInList}
+          />
         </div>
       )}
 

@@ -55,6 +55,15 @@
   body {
     @apply bg-background text-foreground min-h-screen overflow-x-hidden;
   }
+  /* Evitar overflow en móvil */
+  img, video, iframe, object, embed {
+    max-width: 100%;
+    height: auto;
+  }
+  /* Contenedores flex/grid no desbordan en pantallas pequeñas */
+  main {
+    min-width: 0;
+  }
   /* Contenedor responsive con ancho máximo */
   .container {
     @apply w-full max-w-7xl mx-auto;
