@@ -16,16 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PlusCircle, Briefcase, LayoutGrid, List, Search, X, Download, Star, Upload, Calendar, RotateCcw } from "lucide-react";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { PlusCircle, Briefcase, LayoutGrid, List, Search, Download, Star, Calendar, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { APPLICATION_STATUSES, STATUS_LABELS } from "@/lib/constants";
 
@@ -63,10 +54,6 @@ export default function ApplicationsPage() {
   const [toDate, setToDate] = useState("");
   const [favoriteFilter, setFavoriteFilter] = useState(false);
   const [tagsFilter, setTagsFilter] = useState<string[]>([]);
-  const [importOpen, setImportOpen] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{ created: number; errors: { row: number; message: string }[] } | null>(null);
-  const [importFile, setImportFile] = useState<File | null>(null);
 
   const allTags = Array.from(
     new Set(applications.flatMap((a) => parseTags(a.tags)))
@@ -136,44 +123,6 @@ export default function ApplicationsPage() {
     setApplications((prev) =>
       prev.map((a) => (a.id === id ? { ...a, ...updates } : a))
     );
-  };
-
-  const handleImport = async () => {
-    if (!importFile) return;
-    setImporting(true);
-    setImportResult(null);
-    try {
-      const formData = new FormData();
-      formData.set("file", importFile);
-      const res = await fetch("/api/applications/import", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setImportResult({ created: data.created, errors: data.errors ?? [] });
-        refresh();
-        if (data.created > 0) {
-          toast.success(`Importación completada: ${data.created} postulación(es) creada(s)`);
-        }
-        if (data.errors?.length === 0) {
-          setImportFile(null);
-          setTimeout(() => setImportOpen(false), 1500);
-        }
-      } else {
-        setImportResult({ created: 0, errors: [{ row: 0, message: data.error ?? "Error" }] });
-      }
-    } catch {
-      setImportResult({ created: 0, errors: [{ row: 0, message: "Error de red" }] });
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  const closeImport = () => {
-    setImportOpen(false);
-    setImportResult(null);
-    setImportFile(null);
   };
 
   if (loading) {
@@ -270,10 +219,6 @@ export default function ApplicationsPage() {
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Exportar CSV</span>
             </a>
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setImportOpen(true)} className="shrink-0">
-            <Upload className="h-4 w-4 sm:mr-1" />
-            <span className="hidden sm:inline">Importar CSV</span>
           </Button>
           <Button variant="outline" size="sm" asChild className="shrink-0">
             <a href="/api/calendar/ics" download="job-tracker-tareas.ics" className="flex items-center gap-2">
@@ -440,45 +385,6 @@ export default function ApplicationsPage() {
         </div>
       )}
 
-      <Dialog open={importOpen} onOpenChange={(open) => !open && closeImport()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Importar CSV</DialogTitle>
-            <DialogDescription>
-              Sube un archivo CSV con columnas: company, role, status, appliedAt, source, seniority, modality, offerLink, notes.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="import-file">Archivo CSV</Label>
-              <Input
-                id="import-file"
-                type="file"
-                accept=".csv,text/csv"
-                onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
-              />
-            </div>
-            {importResult && (
-              <div className="text-sm space-y-1">
-                <p className="font-medium text-green-600 dark:text-green-500">
-                  {importResult.created} postulación(es) creada(s).
-                </p>
-                {importResult.errors.length > 0 && (
-                  <p className="text-amber-600 dark:text-amber-500">
-                    {importResult.errors.length} error(es): fila {importResult.errors.map((e) => e.row).join(", ")}.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeImport}>Cerrar</Button>
-            <Button onClick={handleImport} disabled={!importFile || importing}>
-              {importing ? "Importando…" : "Importar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { CHECKLIST_ITEMS, CHECKLIST_LABELS } from "@/lib/constants";
+import { CHECKLIST_ITEMS, CHECKLIST_LABELS, STATUS_LABELS } from "@/lib/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -47,15 +47,6 @@ type Application = {
   activities?: { id: string; type: string; payload: string | null; createdAt: string }[];
   isFavorite?: boolean;
   [key: string]: unknown;
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  Applied: "Aplicado",
-  FollowUp: "Follow-up",
-  Interview: "Entrevista",
-  Rejected: "Rechazado",
-  Offer: "Oferta",
-  Ghosted: "Ghosted",
 };
 
 function parseChecklist(checklist: string | null): Record<string, boolean> {

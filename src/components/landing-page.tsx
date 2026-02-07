@@ -52,8 +52,8 @@ const features = [
   },
   {
     icon: FileSpreadsheet,
-    title: "Importar / exportar",
-    description: "Exporta a CSV o importa desde CSV. Exporta tu calendario ICS para Google Calendar o Apple Calendar.",
+    title: "Exportar CSV y calendario",
+    description: "Exporta a CSV. Exporta tu calendario ICS para Google Calendar o Apple Calendar.",
   },
   {
     icon: Shield,

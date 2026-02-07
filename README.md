@@ -33,7 +33,6 @@ Seguimiento de postulaciones, contactos, interacciones y tareas para búsqueda d
 - **Vista Kanban** y **Vista Lista** con toggle
 - **Filtros**: empresa, rol, estado, rango de fechas, solo favoritas, etiquetas
 - **Exportar CSV**: todas las postulaciones filtradas
-- **Importar CSV**: columnas `company`, `role`, `status`, `appliedAt`, `source`, `seniority`, `modality`, `offerLink`, `notes`
 - **Exportar calendario ICS**: tareas pendientes para Google Calendar / Apple Calendar
 - **Duplicar** postulación desde el detalle
 
@@ -179,7 +178,7 @@ src/
 │   │   ├── applications/    # Lista + detalle
 │   │   └── quick-capture/   # Formulario rápido
 │   ├── api/                 # API routes
-│   │   ├── applications/    # CRUD, import, export CSV
+│   │   ├── applications/    # CRUD, export CSV
 │   │   ├── calendar/ics/    # Export calendario
 │   │   ├── contacts/
 │   │   ├── interactions/
