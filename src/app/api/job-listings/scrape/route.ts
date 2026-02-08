@@ -12,12 +12,17 @@ export async function POST() {
     if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { scraped, saved } = await runCronScraping();
-    return NextResponse.json({ ok: true, scraped, saved });
+    const warning =
+      scraped > 0 && saved === 0
+        ? "Se obtuvieron vacantes pero no se guardó ninguna. ¿Ejecutaste las migraciones en la base de datos? (npx prisma migrate deploy)"
+        : undefined;
+    return NextResponse.json({ ok: true, scraped, saved, warning });
   } catch (error) {
     console.error("[scraping] manual run error:", error);
-    return NextResponse.json(
-      { error: "Error al ejecutar el scraping" },
-      { status: 500 }
-    );
+    const message =
+      error instanceof Error && (error.message.includes("JobListing") || error.message.includes("does not exist"))
+        ? "La tabla de vacantes no existe. Ejecuta las migraciones: npx prisma migrate deploy"
+        : "Error al ejecutar el scraping";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

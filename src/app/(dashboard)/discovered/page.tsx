@@ -102,8 +102,21 @@ export default function DiscoveredPage() {
         toast.error(data.error ?? "Error al ejecutar el scraping");
         return;
       }
-      toast.success(`Scraping listo: ${data.scraped ?? 0} vacantes obtenidas, ${data.saved ?? 0} guardadas.`);
-      refreshListings();
+      const scraped = data.scraped ?? 0;
+      const saved = data.saved ?? 0;
+      toast.success(`Scraping listo: ${scraped} vacantes obtenidas, ${saved} guardadas.`);
+      if (data.warning) toast.warning(data.warning);
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (search.trim()) params.set("search", search.trim());
+      if (sourceFilter !== "all") params.set("source", sourceFilter);
+      fetch(`/api/job-listings?${params.toString()}`)
+        .then((r) => r.json())
+        .then((list: unknown) => {
+          setListings(Array.isArray(list) ? list : []);
+        })
+        .catch(() => setListings([]))
+        .finally(() => setLoading(false));
     } catch {
       toast.error("Error al ejecutar el scraping");
     } finally {
@@ -205,7 +218,7 @@ export default function DiscoveredPage() {
         <EmptyState
           icon={Sparkles}
           title="Sin vacantes descubiertas"
-          description="Usa el botón «Ejecutar scraping ahora» para obtener ofertas al instante, o espera al cron diario."
+          description="Usa «Ejecutar scraping ahora» para obtener ofertas. Si el scraping dice que guardó vacantes y aquí no aparece nada, ejecuta en tu base de datos: npx prisma migrate deploy"
           actionLabel="Ir a Postulaciones"
           actionHref="/applications"
         />
