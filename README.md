@@ -111,6 +111,8 @@ Abre [http://localhost:3000](http://localhost:3000).
 | `AUTH_URL`    | URL de la app (NextAuth)         | `http://localhost:3000` (local) |
 | `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | OAuth Google (opcional) | Desde Google Cloud Console |
 | `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` | OAuth GitHub (opcional) | Desde GitHub Developer Settings |
+| `CRON_SECRET` | Secreto para el endpoint del cron de scraping (Vercel Cron) | Valor aleatorio; se envía en `Authorization: Bearer <CRON_SECRET>` |
+| `SERPAPI_API_KEY` | (Opcional) API key SerpApi para vacantes de LinkedIn vía Google Jobs | [serpapi.com](https://serpapi.com); sin ella solo se usan Remotive y RemoteOK (gratis) |
 
 ## Scripts
 
@@ -168,6 +170,15 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 Listo: base de datos en Railway y app en Vercel usando esa misma `DATABASE_URL`.
 
+### Cron de vacantes
+
+El proyecto incluye un cron (Vercel Cron) que se ejecuta **una vez al día** (9:00 UTC) y llama a `GET /api/cron/scrape-jobs`. Ese endpoint obtiene vacantes y las guarda en la tabla **JobListing** (vacantes descubiertas). Fuentes:
+
+- **Remotive** y **RemoteOK**: APIs/feeds gratuitos, sin API key; ofertas de desarrollo remoto (software-dev).
+- **LinkedIn** (opcional): vía SerpApi Google Jobs, 1 búsqueda "software developer" en USA; requiere `SERPAPI_API_KEY` (free tier limitado).
+
+En Vercel configura `CRON_SECRET`; opcionalmente `SERPAPI_API_KEY` si quieres incluir ofertas de LinkedIn.
+
 ## Estructura de la app
 
 ```
@@ -181,6 +192,7 @@ src/
 │   │   ├── applications/    # CRUD, export CSV
 │   │   ├── calendar/ics/    # Export calendario
 │   │   ├── contacts/
+│   │   ├── cron/scrape-jobs/  # Cron: vacantes LinkedIn (SerpApi)
 │   │   ├── interactions/
 │   │   └── tasks/
 │   ├── layout.tsx
@@ -195,7 +207,8 @@ src/
 └── lib/
     ├── db.ts
     ├── constants.ts
-    └── reminders.ts
+    ├── reminders.ts
+    └── scraping/            # Scrapers: LinkedIn (SerpApi), Remotive, RemoteOK; saveJobListings
 ```
 
 ## Próximos pasos (post-MVP)

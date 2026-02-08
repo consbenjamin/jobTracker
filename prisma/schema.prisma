@@ -34,15 +34,35 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String       @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?      @unique
   emailVerified DateTime?
   image         String?
-  password      String?   @db.Text
+  password      String?      @db.Text
   accounts      Account[]
   sessions      Session[]
   applications  Application[]
+  jobListings   JobListing[]
+}
+
+// Vacantes descubiertas por el cron de scraping (el usuario puede convertirlas en Application)
+model JobListing {
+  id          String   @id @default(cuid())
+  company     String
+  role        String
+  offerLink   String?  @db.Text
+  source      String   // LinkedIn | Indeed | Adzuna | etc.
+  seniority   String?
+  modality    String?  // remoto | hibrido | presencial
+  description String?  @db.Text
+  externalId  String?  // para deduplicar por source + externalId
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  @@unique([source, externalId])
+  @@index([userId])
 }
 
 model VerificationToken {
