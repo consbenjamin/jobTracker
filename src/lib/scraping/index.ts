@@ -100,7 +100,11 @@ export async function saveJobListings(jobs: ScrapedJob[], userId?: string | null
       if (j.externalId != null && j.externalId !== "") {
         await prisma.jobListing.upsert({
           where: {
-            source_externalId_userId: { source, externalId: j.externalId, userId: uid },
+            source_externalId_userId: {
+              source,
+              externalId: j.externalId,
+              userId: uid as string,
+            },
           },
           create: {
             company,
