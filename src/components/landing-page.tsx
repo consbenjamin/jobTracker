@@ -16,10 +16,28 @@ import {
   Kanban,
   FileSpreadsheet,
   Target,
+  Globe,
+  Settings,
+  Rss,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
+  {
+    icon: Globe,
+    title: "Vacantes descubiertas",
+    description: "Ofertas automáticas desde Remotive, RemoteOK y Google Jobs (SerpApi). Lista con filtros por fuente y búsqueda; ejecuta el scraping cuando quieras o con cron diario.",
+  },
+  {
+    icon: Settings,
+    title: "Configuración de scraping",
+    description: "Activa o desactiva fuentes (Remotive, RemoteOK, Google Jobs). Opcional: añade tu API key de SerpApi para más ofertas; se guarda cifrada por usuario.",
+  },
+  {
+    icon: Rss,
+    title: "De vacante a postulación",
+    description: "Convierte cualquier vacante descubierta en una postulación con un clic. Empresa, rol y link se rellenan solos; tú sigues el flujo normal en el Kanban.",
+  },
   {
     icon: Kanban,
     title: "Kanban y lista",
@@ -125,7 +143,7 @@ export function LandingPage() {
             className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto text-pretty px-1"
             variants={fadeUp}
           >
-            Kanban, contactos, interacciones, tareas y analytics en un solo lugar. Tema claro/oscuro, PWA instalable y sin complicaciones.
+            Vacantes descubiertas desde Remotive, RemoteOK y Google Jobs; Kanban, contactos, interacciones, tareas y analytics en un solo lugar. Tema claro/oscuro, PWA instalable y sin complicaciones.
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-stretch sm:items-center pt-2 px-1"
@@ -170,6 +188,7 @@ export function LandingPage() {
             viewport={{ once: true, margin: "-40px" }}
           >
             {[
+              "Vacantes descubiertas: Remotive, RemoteOK, Google Jobs; filtros, scraping manual o cron diario; convertir en postulación en un clic",
               "Empresa, rol, link, fuente, estado, seniority, modalidad, salario esperado, stack, notas",
               "Checklist: portfolio, formulario externo, referral",
               "Timeline de actividades e historial de cambios",

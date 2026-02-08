@@ -1,5 +1,10 @@
 import type { ScrapedJob } from "./types";
 
+/**
+ * SerpApi Google Jobs API: https://serpapi.com/google-jobs-api
+ * (No confundir con la Search API general: https://serpapi.com/search-api)
+ * Endpoint: GET https://serpapi.com/search?engine=google_jobs&q=...&api_key=...
+ */
 const SERPAPI_BASE = "https://serpapi.com/search";
 
 interface SerpApiApplyOption {
@@ -20,7 +25,11 @@ interface SerpApiJob {
 }
 
 interface SerpApiJobsResponse {
-  /** SerpApi devuelve jobs_results como array de jobs o como objeto con .jobs */
+  /** Estado: Processing -> Success | Error (doc: search_metadata.status) */
+  search_metadata?: { status?: string };
+  /** Mensaje si la búsqueda falla (ej. API key inválida, rate limit) */
+  error?: string;
+  /** Doc: array de jobs; algunas respuestas pueden tener .jobs dentro de un objeto */
   jobs_results?: SerpApiJob[] | { jobs?: SerpApiJob[] };
   serpapi_pagination?: { next_page_token?: string };
 }
@@ -49,8 +58,19 @@ export async function scrapeLinkedIn(apiKey?: string): Promise<ScrapedJob[]> {
     });
     const url = `${SERPAPI_BASE}?${params.toString()}`;
     const res = await fetch(url, { next: { revalidate: 0 } });
-    if (!res.ok) return allJobs;
     const data = (await res.json()) as SerpApiJobsResponse;
+    if (!res.ok) {
+      console.error("[scraping] SerpApi HTTP", res.status, data?.error ?? res.statusText);
+      return allJobs;
+    }
+    if (data.error) {
+      console.error("[scraping] SerpApi error:", data.error);
+      return allJobs;
+    }
+    if (data.search_metadata?.status && data.search_metadata.status !== "Success") {
+      console.warn("[scraping] SerpApi status:", data.search_metadata.status);
+      return allJobs;
+    }
     const raw = data.jobs_results;
     const jobList = Array.isArray(raw) ? raw : raw?.jobs ?? [];
     for (const job of jobList) {
