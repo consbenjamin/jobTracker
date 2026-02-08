@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut, User, Sparkles } from "lucide-react";
+import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut, User, Sparkles, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -19,13 +19,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
+const mainNavItems = [
   { href: "/", label: "Inicio", icon: LayoutDashboard },
   { href: "/applications", label: "Postulaciones", icon: Briefcase },
-  { href: "/discovered", label: "Vacantes descubiertas", icon: Sparkles },
+  { href: "/discovered", label: "Vacantes descubiertas", icon: Sparkles, featured: true },
+];
+
+const moreNavItems = [
   { href: "/quick-capture", label: "Captura rápida", icon: PlusCircle },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
+
+const allNavItems = [...mainNavItems, ...moreNavItems];
 
 function NavLink({
   href,
@@ -34,6 +39,7 @@ function NavLink({
   isActive,
   onClick,
   className,
+  featured,
 }: {
   href: string;
   label: string;
@@ -41,18 +47,22 @@ function NavLink({
   isActive: boolean;
   onClick?: () => void;
   className?: string;
+  featured?: boolean;
 }) {
   return (
     <Link
       href={href}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 text-sm font-medium transition-colors hover:text-primary",
-        isActive ? "text-primary" : "text-muted-foreground",
+        "flex items-center gap-2 text-sm font-medium transition-all duration-200 rounded-md px-2.5 py-1.5",
+        isActive ? "text-primary bg-accent/80" : "text-muted-foreground",
+        featured
+          ? "hover:bg-amber-500/15 hover:text-amber-700 dark:hover:text-amber-400 dark:hover:bg-amber-500/20 hover:shadow-[0_0_12px_rgba(245,158,11,0.25)] hover:scale-[1.02]"
+          : "hover:text-primary hover:bg-accent/50",
         className
       )}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className={cn("h-4 w-4 shrink-0", featured && "text-amber-600 dark:text-amber-500")} />
       {label}
     </Link>
   );
@@ -201,17 +211,50 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
           </div>
         </div>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-2 lg:gap-4 shrink-0">
-          {navItems.map(({ href, label, icon: Icon }) => (
+        {/* Desktop nav: principales + dropdown Más */}
+        <nav className="hidden md:flex items-center gap-1 shrink-0">
+          {mainNavItems.map(({ href, label, icon: Icon, featured }) => (
             <NavLink
               key={href}
               href={href}
               label={label}
               icon={Icon}
               isActive={pathname === href || (href !== "/" && pathname.startsWith(href))}
+              featured={featured}
             />
           ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "text-sm font-medium text-muted-foreground hover:text-primary hover:bg-accent/50 gap-2 rounded-md px-2.5 py-1.5 h-auto",
+                  moreNavItems.some(({ href }) => pathname === href || pathname.startsWith(href + "/"))
+                    ? "text-primary bg-accent/80"
+                    : ""
+                )}
+                aria-label="Más opciones"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                Más
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px]">
+              {moreNavItems.map(({ href, label, icon: Icon }) => (
+                <DropdownMenuItem key={href} asChild>
+                  <Link
+                    href={href}
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
         <div className="flex items-center gap-2 min-w-0 shrink-0">
@@ -282,7 +325,7 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
       {mobileOpen && (
         <div className="md:hidden border-t border-border bg-background w-full max-w-7xl mx-auto px-4 py-4 min-w-0">
           <nav className="flex flex-col gap-1">
-            {navItems.map(({ href, label, icon: Icon }) => (
+            {allNavItems.map(({ href, label, icon: Icon, featured }) => (
               <NavLink
                 key={href}
                 href={href}
@@ -290,6 +333,7 @@ export function Nav({ searchInputRef: externalSearchRef }: { searchInputRef?: Re
                 icon={Icon}
                 isActive={pathname === href || (href !== "/" && pathname.startsWith(href))}
                 onClick={() => setMobileOpen(false)}
+                featured={featured}
                 className="rounded-lg px-3 py-2 hover:bg-accent"
               />
             ))}
