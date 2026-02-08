@@ -5,6 +5,10 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 
+if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET?.trim()) {
+  throw new Error("AUTH_SECRET es obligatorio en producción. Genera uno con: openssl rand -base64 32");
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   trustHost: true,

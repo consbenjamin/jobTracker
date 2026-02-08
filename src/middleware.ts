@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 
 const protectedPaths = ["/applications", "/quick-capture", "/analytics"];
-const publicPaths = ["/", "/login", "/register"];
+const publicPaths = ["/", "/login", "/register", "/auth-error"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

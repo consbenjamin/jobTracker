@@ -128,26 +128,44 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+    const MAX_TEXT = 2000;
+    const MAX_LINK = 2048;
+    const str = (v: unknown, max: number): string | null =>
+      v != null && typeof v === "string" ? v.slice(0, max) : null;
+    const tagsVal =
+      tags == null
+        ? null
+        : Array.isArray(tags)
+          ? JSON.stringify(tags).slice(0, MAX_TEXT)
+          : str(tags, MAX_TEXT);
+    const companyS = String(company).trim().slice(0, 200);
+    const roleS = String(role).trim().slice(0, 200);
+    if (!companyS || !roleS) {
+      return NextResponse.json(
+        { error: "company y role no pueden estar vacíos" },
+        { status: 400 }
+      );
+    }
 
     const application = await prisma.application.create({
       data: {
         userId,
-        company,
-        role,
-        offerLink: offerLink ?? null,
-        source: source ?? "LinkedIn",
-        status: status ?? "Applied",
-        seniority: seniority ?? null,
-        modality: modality ?? null,
+        company: companyS,
+        role: roleS,
+        offerLink: str(offerLink, MAX_LINK) ?? null,
+        source: (source && String(source).slice(0, 50)) ?? "LinkedIn",
+        status: (status && String(status).slice(0, 50)) ?? "Applied",
+        seniority: str(seniority, 100),
+        modality: str(modality, 50),
         expectedSalary: expectedSalary != null ? Number(expectedSalary) : null,
-        requiredStack: requiredStack ?? null,
+        requiredStack: str(requiredStack, MAX_TEXT),
         requiresExternalForm: Boolean(requiresExternalForm),
-        externalFormLink: externalFormLink ?? null,
-        notes: notes ?? null,
-        checklist: checklist ?? null,
-        cvVersion: cvVersion ?? null,
+        externalFormLink: str(externalFormLink, MAX_LINK) ?? null,
+        notes: str(notes, MAX_TEXT),
+        checklist: str(checklist, MAX_TEXT),
+        cvVersion: str(cvVersion, 50),
         appliedAt: appliedAt ? new Date(appliedAt) : undefined,
-        tags: tags ?? null,
+        tags: tagsVal,
         isFavorite: Boolean(isFavorite),
       },
     });
