@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { FocusModeProvider } from "@/components/focus-mode-context";
 import { AuthProvider } from "@/components/auth-provider";
@@ -38,6 +39,7 @@ export default function RootLayout({
         <AuthProvider>
           <FocusModeProvider>{children}</FocusModeProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
