@@ -21,8 +21,8 @@ export const SCRAPE_SOURCES = [
   },
   {
     id: "LinkedIn",
-    name: "LinkedIn",
-    description: "SerpApi Google Jobs: 1 búsqueda «software developer» en USA. Requiere SERPAPI_API_KEY.",
+    name: "Google Jobs (SerpApi)",
+    description: "SerpApi Google Jobs: ofertas de LinkedIn, Indeed, ZipRecruiter, etc. 1 búsqueda «software developer» en USA. Requiere SERPAPI_API_KEY.",
     envKey: "ENABLE_LINKEDIN",
   },
 ] as const;

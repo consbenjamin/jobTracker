@@ -20,13 +20,14 @@ interface SerpApiJob {
 }
 
 interface SerpApiJobsResponse {
-  jobs_results?: { jobs?: SerpApiJob[] };
+  /** SerpApi devuelve jobs_results como array de jobs o como objeto con .jobs */
+  jobs_results?: SerpApiJob[] | { jobs?: SerpApiJob[] };
   serpapi_pagination?: { next_page_token?: string };
 }
 
 /**
- * Obtiene vacantes de LinkedIn vía SerpApi Google Jobs.
- * Filtra solo resultados donde via === "LinkedIn". Una sola búsqueda: software developer en USA (1 página).
+ * Obtiene vacantes vía SerpApi Google Jobs (LinkedIn, Indeed, ZipRecruiter, etc.).
+ * Una búsqueda: software developer en USA (1 página). source = valor real de "via" por oferta.
  * @param apiKey - Si se pasa, se usa esta key; si no, process.env.SERPAPI_API_KEY (para cron global o usuario).
  */
 export async function scrapeLinkedIn(apiKey?: string): Promise<ScrapedJob[]> {
@@ -50,22 +51,23 @@ export async function scrapeLinkedIn(apiKey?: string): Promise<ScrapedJob[]> {
     const res = await fetch(url, { next: { revalidate: 0 } });
     if (!res.ok) return allJobs;
     const data = (await res.json()) as SerpApiJobsResponse;
-    const jobList = data.jobs_results?.jobs ?? [];
+    const raw = data.jobs_results;
+    const jobList = Array.isArray(raw) ? raw : raw?.jobs ?? [];
     for (const job of jobList) {
-      if (job.via?.toLowerCase().includes("linkedin") !== true) continue;
       const company = job.company_name?.trim() ?? "Unknown";
       const role = job.title?.trim() ?? "Unknown";
       if (!company || !role) continue;
+      const via = job.via?.trim() || "Google Jobs";
       const offerLink =
         job.link ??
-        job.apply_options?.find((o) => o.title?.toLowerCase().includes("linkedin"))?.link ??
+        job.apply_options?.find((o) => o.link)?.link ??
         job.apply_options?.[0]?.link ??
         null;
       allJobs.push({
         company,
         role,
         offerLink: offerLink ?? null,
-        source: "LinkedIn",
+        source: via,
         seniority: null,
         modality: mapScheduleType(job.detected_extensions?.schedule_type),
         description: job.description?.slice(0, 5000) ?? null,
