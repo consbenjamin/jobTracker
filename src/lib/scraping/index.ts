@@ -109,34 +109,52 @@ export async function saveJobListings(
       if (!company || !role || !source) continue;
 
       if (j.externalId != null && j.externalId !== "") {
-        await prisma.jobListing.upsert({
-          where: {
-            source_externalId_userId: {
+        const payload = {
+          company,
+          role,
+          offerLink: j.offerLink?.slice(0, 2048) ?? null,
+          seniority: j.seniority?.slice(0, 100) ?? null,
+          modality: j.modality?.slice(0, 50) ?? null,
+          description: j.description?.slice(0, 5000) ?? null,
+        };
+        // Prisma no permite null en el compound unique del upsert; para global (userId null) usamos findFirst + create/update
+        if (uid == null) {
+          const existing = await prisma.jobListing.findFirst({
+            where: { source, externalId: j.externalId, userId: null },
+          });
+          if (existing) {
+            await prisma.jobListing.update({
+              where: { id: existing.id },
+              data: payload,
+            });
+          } else {
+            await prisma.jobListing.create({
+              data: {
+                ...payload,
+                source,
+                externalId: j.externalId,
+                userId: null,
+              },
+            });
+          }
+        } else {
+          await prisma.jobListing.upsert({
+            where: {
+              source_externalId_userId: {
+                source,
+                externalId: j.externalId,
+                userId: uid,
+              },
+            },
+            create: {
+              ...payload,
               source,
               externalId: j.externalId,
-              userId: uid as string,
+              userId: uid,
             },
-          },
-          create: {
-            company,
-            role,
-            offerLink: j.offerLink?.slice(0, 2048) ?? null,
-            source,
-            seniority: j.seniority?.slice(0, 100) ?? null,
-            modality: j.modality?.slice(0, 50) ?? null,
-            description: j.description?.slice(0, 5000) ?? null,
-            externalId: j.externalId,
-            userId: uid,
-          },
-          update: {
-            company,
-            role,
-            offerLink: j.offerLink?.slice(0, 2048) ?? null,
-            seniority: j.seniority?.slice(0, 100) ?? null,
-            modality: j.modality?.slice(0, 50) ?? null,
-            description: j.description?.slice(0, 5000) ?? null,
-          },
-        });
+            update: payload,
+          });
+        }
         saved++;
       } else {
         const existing = j.offerLink
