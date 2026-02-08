@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
-import { Search, ExternalLink, PlusCircle, Info, Sparkles, Settings } from "lucide-react";
+import { Search, ExternalLink, PlusCircle, Info, Sparkles, Settings, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 type JobListing = {
@@ -36,6 +36,19 @@ export default function DiscoveredPage() {
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [scrapingNow, setScrapingNow] = useState(false);
+
+  const refreshListings = () => {
+    const params = new URLSearchParams();
+    if (search.trim()) params.set("search", search.trim());
+    if (sourceFilter !== "all") params.set("source", sourceFilter);
+    fetch(`/api/job-listings?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        if (Array.isArray(data)) setListings(data as JobListing[]);
+      })
+      .catch(() => setListings([]));
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -77,6 +90,24 @@ export default function DiscoveredPage() {
       toast.error("Error al añadir a postulaciones");
     } finally {
       setAddingId(null);
+    }
+  };
+
+  const handleRunScraping = async () => {
+    setScrapingNow(true);
+    try {
+      const res = await fetch("/api/job-listings/scrape", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al ejecutar el scraping");
+        return;
+      }
+      toast.success(`Scraping listo: ${data.scraped ?? 0} vacantes obtenidas, ${data.saved ?? 0} guardadas.`);
+      refreshListings();
+    } catch {
+      toast.error("Error al ejecutar el scraping");
+    } finally {
+      setScrapingNow(false);
     }
   };
 
@@ -123,7 +154,7 @@ export default function DiscoveredPage() {
         </CardContent>
       </Card>
 
-      {/* Filtros */}
+      {/* Filtros y scraping manual */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -145,6 +176,14 @@ export default function DiscoveredPage() {
             ))}
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          onClick={handleRunScraping}
+          disabled={scrapingNow}
+        >
+          <RefreshCw className={`h-4 w-4 mr-1.5 ${scrapingNow ? "animate-spin" : ""}`} />
+          {scrapingNow ? "Ejecutando…" : "Ejecutar scraping ahora"}
+        </Button>
       </div>
 
       {/* Lista */}
@@ -166,7 +205,7 @@ export default function DiscoveredPage() {
         <EmptyState
           icon={Sparkles}
           title="Sin vacantes descubiertas"
-          description="El cron aún no ha guardado ofertas, o no hay resultados con los filtros actuales. Revisa que el cron esté configurado en Vercel (CRON_SECRET) y que Remotive/RemoteOK respondan."
+          description="Usa el botón «Ejecutar scraping ahora» para obtener ofertas al instante, o espera al cron diario."
           actionLabel="Ir a Postulaciones"
           actionHref="/applications"
         />
