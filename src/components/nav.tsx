@@ -19,18 +19,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const mainNavItems = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  featured?: boolean;
+};
+
+const mainNavItems: NavItem[] = [
   { href: "/", label: "Inicio", icon: LayoutDashboard },
   { href: "/applications", label: "Postulaciones", icon: Briefcase },
   { href: "/discovered", label: "Vacantes descubiertas", icon: Sparkles, featured: true },
 ];
 
-const moreNavItems = [
+const moreNavItems: NavItem[] = [
   { href: "/quick-capture", label: "Captura rápida", icon: PlusCircle },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-const allNavItems = [...mainNavItems, ...moreNavItems];
+const allNavItems: NavItem[] = [...mainNavItems, ...moreNavItems];
 
 function NavLink({
   href,
