@@ -24,15 +24,22 @@ export async function runAllScrapers(): Promise<ScrapedJob[]> {
  * Ejecuta el scraping completo del cron: fuentes globales (Remotive, RemoteOK, LinkedIn con key de sistema)
  * y LinkedIn por cada usuario que tenga su propia API key guardada.
  */
-export async function runCronScraping(): Promise<{ scraped: number; saved: number }> {
+export async function runCronScraping(): Promise<{
+  scraped: number;
+  saved: number;
+  firstError?: string;
+}> {
   let totalScraped = 0;
   let totalSaved = 0;
+  let firstError: string | undefined;
 
   const run = async (jobs: ScrapedJob[], userId: string | null) => {
     const n = jobs.length;
     if (n === 0) return;
     totalScraped += n;
-    totalSaved += await saveJobListings(jobs, userId);
+    const result = await saveJobListings(jobs, userId);
+    totalSaved += result.saved;
+    if (result.firstError && !firstError) firstError = result.firstError;
   };
 
   if (isSourceEnabled("ENABLE_REMOTIVE")) {
@@ -66,7 +73,7 @@ export async function runCronScraping(): Promise<{ scraped: number; saved: numbe
     }
   }
 
-  return { scraped: totalScraped, saved: totalSaved };
+  return { scraped: totalScraped, saved: totalSaved, firstError };
 }
 
 function deduplicate(jobs: ScrapedJob[]): ScrapedJob[] {
@@ -87,9 +94,13 @@ const userIdForUnique = (userId: string | null | undefined) => userId ?? null;
  * Persiste las vacantes en JobListing. Usa upsert cuando hay externalId; si no, busca por source + offerLink + userId.
  * @param userId - Si se pasa, las filas se asocian a ese usuario (p. ej. LinkedIn con API key del usuario). null = global.
  */
-export async function saveJobListings(jobs: ScrapedJob[], userId?: string | null): Promise<number> {
+export async function saveJobListings(
+  jobs: ScrapedJob[],
+  userId?: string | null
+): Promise<{ saved: number; firstError?: string }> {
   const uid = userIdForUnique(userId);
   let saved = 0;
+  let firstError: string | undefined;
   for (const j of jobs) {
     try {
       const company = String(j.company).trim().slice(0, 200);
@@ -162,8 +173,10 @@ export async function saveJobListings(jobs: ScrapedJob[], userId?: string | null
         }
       }
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!firstError) firstError = msg;
       console.error("[scraping] saveJobListings item error:", e);
     }
   }
-  return saved;
+  return { saved, firstError };
 }

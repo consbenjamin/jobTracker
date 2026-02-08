@@ -11,11 +11,13 @@ export async function POST() {
     const userId = await getSessionUserId();
     if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-    const { scraped, saved } = await runCronScraping();
-    const warning =
-      scraped > 0 && saved === 0
-        ? "Se obtuvieron vacantes pero no se guardó ninguna. ¿Ejecutaste las migraciones en la base de datos? (npx prisma migrate deploy)"
-        : undefined;
+    const { scraped, saved, firstError } = await runCronScraping();
+    let warning: string | undefined;
+    if (scraped > 0 && saved === 0) {
+      warning = firstError
+        ? `No se guardó ninguna. Error: ${firstError}`
+        : "Se obtuvieron vacantes pero no se guardó ninguna. ¿Ejecutaste las migraciones? (npx prisma migrate deploy)";
+    }
     return NextResponse.json({ ok: true, scraped, saved, warning });
   } catch (error) {
     console.error("[scraping] manual run error:", error);
