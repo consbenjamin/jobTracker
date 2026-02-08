@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut, User } from "lucide-react";
+import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut, User, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
 const navItems = [
   { href: "/", label: "Inicio", icon: LayoutDashboard },
   { href: "/applications", label: "Postulaciones", icon: Briefcase },
+  { href: "/discovered", label: "Vacantes descubiertas", icon: Sparkles },
   { href: "/quick-capture", label: "Captura rápida", icon: PlusCircle },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
 ];

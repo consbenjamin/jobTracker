@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { runAllScrapers, saveJobListings } from "@/lib/scraping";
+import { runCronScraping } from "@/lib/scraping";
 
 /**
- * Endpoint para el cron de Vercel. Ejecuta los scrapers y persiste en JobListing.
+ * Endpoint para el cron de Vercel. Ejecuta scrapers globales y por usuario (API key propia de SerpApi).
  * Debe llamarse con Authorization: Bearer <CRON_SECRET> (configurar CRON_SECRET en Vercel).
  */
 export async function GET(request: NextRequest) {
@@ -14,9 +14,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const jobs = await runAllScrapers();
-    const saved = await saveJobListings(jobs);
-    return NextResponse.json({ ok: true, scraped: jobs.length, saved });
+    const { scraped, saved } = await runCronScraping();
+    return NextResponse.json({ ok: true, scraped, saved });
   } catch (e) {
     console.error("[cron] scrape-jobs error:", e);
     return NextResponse.json(

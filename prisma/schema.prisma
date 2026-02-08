@@ -34,16 +34,17 @@ model Session {
 }
 
 model User {
-  id            String       @id @default(cuid())
-  name          String?
-  email         String?      @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?      @db.Text
-  accounts      Account[]
-  sessions      Session[]
-  applications  Application[]
-  jobListings   JobListing[]
+  id                    String       @id @default(cuid())
+  name                  String?
+  email                 String?      @unique
+  emailVerified         DateTime?
+  image                 String?
+  password              String?      @db.Text
+  serpApiKeyEncrypted   String?      @db.Text
+  accounts              Account[]
+  sessions              Session[]
+  applications          Application[]
+  jobListings           JobListing[]
 }
 
 // Vacantes descubiertas por el cron de scraping (el usuario puede convertirlas en Application)
@@ -61,7 +62,7 @@ model JobListing {
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
 
-  @@unique([source, externalId])
+  @@unique([source, externalId, userId])
   @@index([userId])
 }
 

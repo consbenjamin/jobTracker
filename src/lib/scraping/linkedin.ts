@@ -26,14 +26,12 @@ interface SerpApiJobsResponse {
 
 /**
  * Obtiene vacantes de LinkedIn vía SerpApi Google Jobs.
- * Filtra solo resultados donde via === "LinkedIn".
- * Una sola búsqueda: software developer en USA (1 página).
- * Requiere SERPAPI_API_KEY en env (https://serpapi.com).
+ * Filtra solo resultados donde via === "LinkedIn". Una sola búsqueda: software developer en USA (1 página).
+ * @param apiKey - Si se pasa, se usa esta key; si no, process.env.SERPAPI_API_KEY (para cron global o usuario).
  */
-export async function scrapeLinkedIn(): Promise<ScrapedJob[]> {
-  const apiKey = process.env.SERPAPI_API_KEY;
-  if (!apiKey) {
-    console.warn("[scraping] SERPAPI_API_KEY no definida; no se obtendrán vacantes de LinkedIn.");
+export async function scrapeLinkedIn(apiKey?: string): Promise<ScrapedJob[]> {
+  const key = apiKey ?? process.env.SERPAPI_API_KEY;
+  if (!key?.trim()) {
     return [];
   }
 
@@ -44,7 +42,7 @@ export async function scrapeLinkedIn(): Promise<ScrapedJob[]> {
       engine: "google_jobs",
       q: "software developer",
       location: "United States",
-      api_key: apiKey,
+      api_key: key.trim(),
       gl: "us",
       hl: "en",
     });
