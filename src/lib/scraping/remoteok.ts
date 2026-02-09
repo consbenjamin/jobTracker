@@ -69,6 +69,7 @@ export async function scrapeRemoteOK(): Promise<ScrapedJob[]> {
         role,
         offerLink: j.apply_url?.trim() ?? j.url?.trim() ?? null,
         source: "RemoteOK",
+        category: "software-development", // RemoteOK se filtra por tags de desarrollo
         seniority: null,
         modality: "remoto",
         description: typeof j.description === "string" ? j.description.slice(0, 5000) : null,

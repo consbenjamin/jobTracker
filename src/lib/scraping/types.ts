@@ -7,6 +7,7 @@ export interface ScrapedJob {
   role: string;
   offerLink: string | null;
   source: string;
+  category?: string | null; // slug: software-development, marketing, design, etc.
   seniority?: string | null;
   modality?: string | null;
   description?: string | null;

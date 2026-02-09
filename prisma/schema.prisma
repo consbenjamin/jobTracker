@@ -41,6 +41,7 @@ model User {
   image                 String?
   password              String?      @db.Text
   serpApiKeyEncrypted   String?      @db.Text
+  jobCategories         String?      @db.Text // JSON array: ["software-development", "marketing", ...]
   accounts              Account[]
   sessions              Session[]
   applications          Application[]
@@ -54,6 +55,7 @@ model JobListing {
   role        String
   offerLink   String?  @db.Text
   source      String   // LinkedIn | Indeed | Adzuna | etc.
+  category    String?  // slug de categoría: software-development, marketing, design, etc.
   seniority   String?
   modality    String?  // remoto | hibrido | presencial
   description String?  @db.Text
@@ -64,6 +66,7 @@ model JobListing {
 
   @@unique([source, externalId, userId])
   @@index([userId])
+  @@index([category])
 }
 
 model VerificationToken {

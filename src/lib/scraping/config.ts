@@ -10,7 +10,7 @@ export const SCRAPE_SOURCES = [
   {
     id: "Remotive",
     name: "Remotive",
-    description: "Categoría software-dev. API gratuita, hasta 25 ofertas por ejecución.",
+    description: "Categorías según preferencias del usuario (Software Development, Marketing, etc.). API gratuita.",
     envKey: "ENABLE_REMOTIVE",
   },
   {

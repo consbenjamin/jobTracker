@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const source = searchParams.get("source");
     const search = searchParams.get("search");
+    const categoriesParam = searchParams.get("categories"); // comma-separated: "software-development,marketing"
 
     const andParts: Record<string, unknown>[] = [
       { OR: [{ userId: null }, { userId }] },
@@ -27,6 +28,14 @@ export async function GET(request: NextRequest) {
           { role: { contains: term, mode: "insensitive" } },
         ],
       });
+    }
+    if (categoriesParam?.trim()) {
+      const list = categoriesParam.split(",").map((c) => c.trim()).filter(Boolean);
+      if (list.length > 0) {
+        andParts.push({
+          OR: [{ category: { in: list } }, { category: null }],
+        });
+      }
     }
     const where = { AND: andParts };
 

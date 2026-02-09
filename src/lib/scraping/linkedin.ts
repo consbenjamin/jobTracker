@@ -1,4 +1,5 @@
 import type { ScrapedJob } from "./types";
+import { JOB_CATEGORIES } from "@/lib/job-categories";
 
 /**
  * SerpApi Google Jobs API: https://serpapi.com/google-jobs-api
@@ -36,21 +37,25 @@ interface SerpApiJobsResponse {
 
 /**
  * Obtiene vacantes vía SerpApi Google Jobs (LinkedIn, Indeed, ZipRecruiter, etc.).
- * Una búsqueda: software developer en USA (1 página). source = valor real de "via" por oferta.
+ * Una búsqueda por ejecución (query configurable). source = valor real de "via" por oferta.
  * @param apiKey - Si se pasa, se usa esta key; si no, process.env.SERPAPI_API_KEY (para cron global o usuario).
+ * @param searchQuery - Término de búsqueda (ej. "software developer", "marketing manager"). Por defecto "software developer".
  */
-export async function scrapeLinkedIn(apiKey?: string): Promise<ScrapedJob[]> {
+export async function scrapeLinkedIn(
+  apiKey?: string,
+  searchQuery: string = "software developer"
+): Promise<ScrapedJob[]> {
   const key = apiKey ?? process.env.SERPAPI_API_KEY;
   if (!key?.trim()) {
     return [];
   }
 
-  // Una sola búsqueda por ejecución para ahorrar créditos SerpApi (free tier): software developer en USA, 1 página
+  const query = searchQuery?.trim() || "software developer";
   const allJobs: ScrapedJob[] = [];
   try {
     const params = new URLSearchParams({
       engine: "google_jobs",
-      q: "software developer",
+      q: query,
       location: "United States",
       api_key: key.trim(),
       gl: "us",
@@ -83,11 +88,13 @@ export async function scrapeLinkedIn(apiKey?: string): Promise<ScrapedJob[]> {
         job.apply_options?.find((o) => o.link)?.link ??
         job.apply_options?.[0]?.link ??
         null;
+      const categorySlug = queryToCategorySlug(query);
       allJobs.push({
         company,
         role,
         offerLink: offerLink ?? null,
         source: via,
+        category: categorySlug,
         seniority: null,
         modality: mapScheduleType(job.detected_extensions?.schedule_type),
         description: job.description?.slice(0, 5000) ?? null,
@@ -99,6 +106,14 @@ export async function scrapeLinkedIn(apiKey?: string): Promise<ScrapedJob[]> {
   }
 
   return allJobs;
+}
+
+function queryToCategorySlug(query: string): string {
+  const q = query.toLowerCase().trim();
+  const found = JOB_CATEGORIES.find(
+    (c) => c.linkedInQuery.toLowerCase() === q || c.id.replace(/-/g, " ") === q.replace(/-/g, " ")
+  );
+  return found?.id ?? "software-development";
 }
 
 function mapScheduleType(scheduleType?: string): string | null {

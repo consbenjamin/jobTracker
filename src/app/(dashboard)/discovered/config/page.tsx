@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Settings, ArrowLeft, Clock, Check, X, Key } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Settings, ArrowLeft, Clock, Check, X, Key, Briefcase } from "lucide-react";
 import { toast } from "sonner";
 
 type Source = {
@@ -22,12 +23,17 @@ type Config = {
   sources: Source[];
 };
 
+type JobCategory = { id: string; label: string };
+
 export default function ScrapingConfigPage() {
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasSerpApiKey, setHasSerpApiKey] = useState<boolean | null>(null);
   const [serpApiKeyInput, setSerpApiKeyInput] = useState("");
   const [serpApiSaving, setSerpApiSaving] = useState(false);
+  const [jobCategoriesList, setJobCategoriesList] = useState<JobCategory[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categoriesSaving, setCategoriesSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +74,26 @@ export default function ScrapingConfigPage() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/user/job-categories")
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        if (cancelled) return;
+        if (data && typeof data === "object" && "categories" in data && "selected" in data) {
+          const d = data as { categories: JobCategory[]; selected: string[] };
+          setJobCategoriesList(d.categories ?? []);
+          setSelectedCategories(Array.isArray(d.selected) ? d.selected : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setJobCategoriesList([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSaveSerpApiKey = async () => {
     setSerpApiSaving(true);
     try {
@@ -88,6 +114,38 @@ export default function ScrapingConfigPage() {
       toast.error("Error al guardar la API key");
     } finally {
       setSerpApiSaving(false);
+    }
+  };
+
+  const handleCategoryToggle = async (id: string, checked: boolean) => {
+    const next = checked
+      ? [...selectedCategories, id]
+      : selectedCategories.filter((c) => c !== id);
+    if (next.length === 0) {
+      toast.error("Elige al menos una categoría");
+      return;
+    }
+    setSelectedCategories(next);
+    setCategoriesSaving(true);
+    try {
+      const res = await fetch("/api/user/job-categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ categories: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al guardar categorías");
+        setSelectedCategories(selectedCategories);
+        return;
+      }
+      if (data.selected) setSelectedCategories(data.selected);
+      toast.success("Categorías actualizadas.");
+    } catch {
+      toast.error("Error al guardar las categorías");
+      setSelectedCategories(selectedCategories);
+    } finally {
+      setCategoriesSaving(false);
     }
   };
 
@@ -211,6 +269,44 @@ export default function ScrapingConfigPage() {
                     {serpApiSaving ? "Guardando…" : "Guardar"}
                   </Button>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-base font-medium flex items-center gap-2">
+                <Briefcase className="h-4 w-4" />
+                Categorías de trabajo que buscas
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Elige en qué áreas quieres ver vacantes (Remotive, Google Jobs, etc.). Por defecto se usa Software Development.
+              </p>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {jobCategoriesList.length === 0 ? (
+                <Skeleton className="h-24 w-full" />
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {jobCategoriesList.map((cat) => (
+                    <label
+                      key={cat.id}
+                      className="flex items-center gap-2 cursor-pointer rounded-md p-2 hover:bg-muted/50"
+                    >
+                      <Checkbox
+                        checked={selectedCategories.includes(cat.id)}
+                        onCheckedChange={(checked) =>
+                          handleCategoryToggle(cat.id, checked === true)
+                        }
+                        disabled={categoriesSaving}
+                      />
+                      <span className="text-sm">{cat.label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              {categoriesSaving && (
+                <p className="text-xs text-muted-foreground mt-2">Guardando…</p>
               )}
             </CardContent>
           </Card>

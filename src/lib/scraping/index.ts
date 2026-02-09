@@ -5,15 +5,38 @@ import { isSourceEnabled } from "./config";
 import { scrapeLinkedIn } from "./linkedin";
 import { scrapeRemotive } from "./remotive";
 import { scrapeRemoteOK } from "./remoteok";
+import {
+  parseUserJobCategories,
+  getLinkedInQueryForCategory,
+  DEFAULT_JOB_CATEGORIES,
+} from "@/lib/job-categories";
 
 export type { ScrapedJob } from "./types";
+
+/** Categorías a scrapear en Remotive: unión de las que piden los usuarios, o por defecto software-development. Máx 4 requests/día recomendado. */
+const REMOTIVE_MAX_CATEGORIES = 4;
+
+async function getRemotiveCategories(): Promise<string[]> {
+  const users = await prisma.user.findMany({
+    where: { jobCategories: { not: null } },
+    select: { jobCategories: true },
+  });
+  const set = new Set<string>();
+  for (const u of users) {
+    const cats = parseUserJobCategories(u.jobCategories);
+    cats.forEach((c) => set.add(c));
+  }
+  const list = set.size > 0 ? Array.from(set) : [...DEFAULT_JOB_CATEGORIES];
+  return list.slice(0, REMOTIVE_MAX_CATEGORIES);
+}
 
 /**
  * Ejecuta los scrapers habilitados (ENABLE_*) en paralelo. Para uso con API key global únicamente.
  */
 export async function runAllScrapers(): Promise<ScrapedJob[]> {
+  const categories = await getRemotiveCategories();
   const promises: Promise<ScrapedJob[]>[] = [];
-  if (isSourceEnabled("ENABLE_REMOTIVE")) promises.push(scrapeRemotive());
+  if (isSourceEnabled("ENABLE_REMOTIVE")) promises.push(scrapeRemotive(categories));
   if (isSourceEnabled("ENABLE_REMOTEOK")) promises.push(scrapeRemoteOK());
   if (isSourceEnabled("ENABLE_LINKEDIN")) promises.push(scrapeLinkedIn());
   const results = await Promise.all(promises);
@@ -22,7 +45,7 @@ export async function runAllScrapers(): Promise<ScrapedJob[]> {
 
 /**
  * Ejecuta el scraping completo del cron: fuentes globales (Remotive, RemoteOK, LinkedIn con key de sistema)
- * y LinkedIn por cada usuario que tenga su propia API key guardada.
+ * y LinkedIn por cada usuario que tenga su propia API key guardada. Usa categorías configuradas por usuarios.
  */
 export async function runCronScraping(): Promise<{
   scraped: number;
@@ -43,7 +66,8 @@ export async function runCronScraping(): Promise<{
   };
 
   if (isSourceEnabled("ENABLE_REMOTIVE")) {
-    const jobs = await scrapeRemotive();
+    const categories = await getRemotiveCategories();
+    const jobs = await scrapeRemotive(categories);
     await run(jobs, null);
   }
   if (isSourceEnabled("ENABLE_REMOTEOK")) {
@@ -52,21 +76,25 @@ export async function runCronScraping(): Promise<{
   }
 
   const systemKey = process.env.SERPAPI_API_KEY?.trim();
+  const systemCategories = await getRemotiveCategories();
+  const systemQuery = getLinkedInQueryForCategory(systemCategories[0] ?? "software-development");
   if (isSourceEnabled("ENABLE_LINKEDIN") && systemKey) {
-    const jobs = await scrapeLinkedIn(systemKey);
+    const jobs = await scrapeLinkedIn(systemKey, systemQuery);
     await run(deduplicate(jobs), null);
   }
 
   const usersWithKey = await prisma.user.findMany({
     where: { serpApiKeyEncrypted: { not: null } },
-    select: { id: true, serpApiKeyEncrypted: true },
+    select: { id: true, serpApiKeyEncrypted: true, jobCategories: true },
   });
 
   for (const u of usersWithKey) {
     if (!u.serpApiKeyEncrypted) continue;
     try {
       const key = decrypt(u.serpApiKeyEncrypted);
-      const jobs = await scrapeLinkedIn(key);
+      const categories = parseUserJobCategories(u.jobCategories);
+      const query = getLinkedInQueryForCategory(categories[0] ?? "software-development");
+      const jobs = await scrapeLinkedIn(key, query);
       await run(deduplicate(jobs), u.id);
     } catch (e) {
       console.error("[scraping] LinkedIn for user", u.id, "error:", e);
@@ -108,11 +136,13 @@ export async function saveJobListings(
       const source = String(j.source).trim().slice(0, 50);
       if (!company || !role || !source) continue;
 
+      const category = j.category?.trim().slice(0, 50) ?? null;
       if (j.externalId != null && j.externalId !== "") {
         const payload = {
           company,
           role,
           offerLink: j.offerLink?.slice(0, 2048) ?? null,
+          category,
           seniority: j.seniority?.slice(0, 100) ?? null,
           modality: j.modality?.slice(0, 50) ?? null,
           description: j.description?.slice(0, 5000) ?? null,
@@ -168,6 +198,7 @@ export async function saveJobListings(
             data: {
               company,
               role,
+              category,
               seniority: j.seniority?.slice(0, 100) ?? null,
               modality: j.modality?.slice(0, 50) ?? null,
               description: j.description?.slice(0, 5000) ?? null,
@@ -181,6 +212,7 @@ export async function saveJobListings(
               role,
               offerLink: j.offerLink?.slice(0, 2048) ?? null,
               source,
+              category,
               seniority: j.seniority?.slice(0, 100) ?? null,
               modality: j.modality?.slice(0, 50) ?? null,
               description: j.description?.slice(0, 5000) ?? null,

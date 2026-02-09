@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,7 @@ type JobListing = {
   company: string;
   role: string;
   source: string;
+  category: string | null;
   offerLink: string | null;
   modality: string | null;
   description: string | null;
@@ -30,19 +31,53 @@ type JobListing = {
 
 const SOURCES = ["Remotive", "RemoteOK", "LinkedIn"] as const;
 
+function formatCategoryLabel(slug: string | null): string {
+  if (!slug) return "";
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 export default function DiscoveredPage() {
   const [listings, setListings] = useState<JobListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("mine"); // "mine" | "all"
+  const [userCategories, setUserCategories] = useState<string[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [scrapingNow, setScrapingNow] = useState(false);
 
-  const refreshListings = () => {
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/user/job-categories")
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        if (cancelled) return;
+        if (data && typeof data === "object" && "selected" in data) {
+          const sel = (data as { selected: string[] }).selected;
+          setUserCategories(Array.isArray(sel) ? sel : []);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const buildListingsParams = () => {
     const params = new URLSearchParams();
     if (search.trim()) params.set("search", search.trim());
     if (sourceFilter !== "all") params.set("source", sourceFilter);
-    fetch(`/api/job-listings?${params.toString()}`)
+    if (categoryFilter === "mine" && userCategories.length > 0) {
+      params.set("categories", userCategories.join(","));
+    }
+    return params;
+  };
+
+  const refreshListings = () => {
+    fetch(`/api/job-listings?${buildListingsParams().toString()}`)
       .then((res) => res.json())
       .then((data: unknown) => {
         if (Array.isArray(data)) setListings(data as JobListing[]);
@@ -53,10 +88,7 @@ export default function DiscoveredPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    const params = new URLSearchParams();
-    if (search.trim()) params.set("search", search.trim());
-    if (sourceFilter !== "all") params.set("source", sourceFilter);
-    fetch(`/api/job-listings?${params.toString()}`)
+    fetch(`/api/job-listings?${buildListingsParams().toString()}`)
       .then((res) => res.json())
       .then((data: unknown) => {
         if (cancelled || !Array.isArray(data)) return;
@@ -71,7 +103,7 @@ export default function DiscoveredPage() {
     return () => {
       cancelled = true;
     };
-  }, [search, sourceFilter]);
+  }, [search, sourceFilter, categoryFilter, userCategories.join(",")]);
 
   const handleAddToApplications = async (listing: JobListing) => {
     setAddingId(listing.id);
@@ -107,10 +139,7 @@ export default function DiscoveredPage() {
       toast.success(`Scraping listo: ${scraped} vacantes obtenidas, ${saved} guardadas.`);
       if (data.warning) toast.warning(data.warning);
       setLoading(true);
-      const params = new URLSearchParams();
-      if (search.trim()) params.set("search", search.trim());
-      if (sourceFilter !== "all") params.set("source", sourceFilter);
-      fetch(`/api/job-listings?${params.toString()}`)
+      fetch(`/api/job-listings?${buildListingsParams().toString()}`)
         .then((r) => r.json())
         .then((list: unknown) => {
           setListings(Array.isArray(list) ? list : []);
@@ -157,9 +186,9 @@ export default function DiscoveredPage() {
             Un cron ejecuta el scraping <strong>una vez al día</strong> (9:00 UTC) y guarda ofertas aquí.
           </p>
           <ul className="list-disc list-inside space-y-1">
-            <li><strong>Remotive</strong>: categoría software-dev (remoto).</li>
+            <li><strong>Remotive</strong>: según las categorías que elijas en Configuración (Software Development, Marketing, etc.).</li>
             <li><strong>RemoteOK</strong>: ofertas con tags de desarrollo (developer, software, engineer, etc.).</li>
-            <li><strong>LinkedIn</strong>: búsqueda &quot;software developer&quot; en USA (requiere SerpApi configurado).</li>
+            <li><strong>LinkedIn</strong>: búsqueda según tu primera categoría en Configuración (requiere SerpApi).</li>
           </ul>
           <p className="text-xs pt-1">
             En <Link href="/discovered/config" className="underline text-foreground">Configuración</Link> ves la frecuencia y qué fuentes están activas. Para desactivar una fuente usa en .env o Vercel: <code className="bg-muted px-1 rounded">ENABLE_REMOTIVE=false</code>, etc.
@@ -187,6 +216,17 @@ export default function DiscoveredPage() {
             {SOURCES.map((s) => (
               <SelectItem key={s} value={s}>{s}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Categoría" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="mine">
+              Mis categorías{userCategories.length > 0 ? ` (${userCategories.length})` : ""}
+            </SelectItem>
+            <SelectItem value="all">Todas las categorías</SelectItem>
           </SelectContent>
         </Select>
         <Button
@@ -229,10 +269,15 @@ export default function DiscoveredPage() {
               <CardHeader className="pb-2">
                 <h3 className="font-semibold leading-tight">{listing.role}</h3>
                 <p className="text-sm text-muted-foreground">{listing.company}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <span className="text-xs px-2 py-0.5 rounded bg-muted">
                     {listing.source}
                   </span>
+                  {listing.category && (
+                    <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
+                      {formatCategoryLabel(listing.category)}
+                    </span>
+                  )}
                   {listing.modality && (
                     <span className="text-xs text-muted-foreground">{listing.modality}</span>
                   )}
@@ -269,6 +314,3 @@ export default function DiscoveredPage() {
   );
 }
 
-function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={`text-sm font-medium ${className ?? ""}`} {...props} />;
-}
