@@ -68,7 +68,7 @@ export async function runCronScraping(): Promise<{
   if (isSourceEnabled("ENABLE_REMOTIVE")) {
     const categories = await getRemotiveCategories();
     const jobs = await scrapeRemotive(categories);
-    await run(jobs, null);
+    await run(deduplicate(jobs), null);
   }
   if (isSourceEnabled("ENABLE_REMOTEOK")) {
     const jobs = await scrapeRemoteOK();
@@ -187,17 +187,29 @@ export async function saveJobListings(
         }
         saved++;
       } else {
-        const existing = j.offerLink
+        // Sin externalId: buscar por offerLink o por (source, company, role) para evitar duplicados
+        let existing = j.offerLink
           ? await prisma.jobListing.findFirst({
               where: { source, offerLink: j.offerLink, userId: uid },
             })
           : null;
+        if (!existing) {
+          existing = await prisma.jobListing.findFirst({
+            where: {
+              source,
+              userId: uid,
+              company: { equals: company, mode: "insensitive" },
+              role: { equals: role, mode: "insensitive" },
+            },
+          });
+        }
         if (existing) {
           await prisma.jobListing.update({
             where: { id: existing.id },
             data: {
               company,
               role,
+              offerLink: j.offerLink?.slice(0, 2048) ?? existing.offerLink,
               category,
               seniority: j.seniority?.slice(0, 100) ?? null,
               modality: j.modality?.slice(0, 50) ?? null,
