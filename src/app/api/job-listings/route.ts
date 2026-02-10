@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const source = searchParams.get("source");
     const search = searchParams.get("search");
-    const categoriesParam = searchParams.get("categories"); // comma-separated: "software-development,marketing"
+    const categoriesParam = searchParams.get("categories"); // comma-separated
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
+    const limit = Math.min(50, Math.max(6, parseInt(searchParams.get("limit") ?? "12", 10) || 12));
+    const skip = (page - 1) * limit;
 
     const andParts: Record<string, unknown>[] = [
       { OR: [{ userId: null }, { userId }] },
@@ -39,13 +42,24 @@ export async function GET(request: NextRequest) {
     }
     const where = { AND: andParts };
 
-    const list = await prisma.jobListing.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: 200,
-    });
+    const [list, total] = await Promise.all([
+      prisma.jobListing.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.jobListing.count({ where }),
+    ]);
 
-    return NextResponse.json(list);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    return NextResponse.json({
+      items: list,
+      total,
+      page,
+      limit,
+      totalPages,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json(

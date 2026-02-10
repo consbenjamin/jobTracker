@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
-import { Search, ExternalLink, PlusCircle, Info, Sparkles, Settings, RefreshCw } from "lucide-react";
+import { Search, ExternalLink, PlusCircle, Info, Sparkles, Settings, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+
+const PAGE_SIZE = 12;
 
 type JobListing = {
   id: string;
@@ -44,8 +46,11 @@ export default function DiscoveredPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [categoryFilter, setCategoryFilter] = useState<string>("mine"); // "mine" | "all"
+  const [categoryFilter, setCategoryFilter] = useState<string>("mine");
   const [userCategories, setUserCategories] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [scrapingNow, setScrapingNow] = useState(false);
 
@@ -66,44 +71,66 @@ export default function DiscoveredPage() {
     };
   }, []);
 
-  const buildListingsParams = () => {
-    const params = new URLSearchParams();
-    if (search.trim()) params.set("search", search.trim());
-    if (sourceFilter !== "all") params.set("source", sourceFilter);
-    if (categoryFilter === "mine" && userCategories.length > 0) {
-      params.set("categories", userCategories.join(","));
-    }
-    return params;
-  };
+  const buildListingsParams = useCallback(
+    (pageNum: number) => {
+      const params = new URLSearchParams();
+      if (search.trim()) params.set("search", search.trim());
+      if (sourceFilter !== "all") params.set("source", sourceFilter);
+      if (categoryFilter === "mine" && userCategories.length > 0) {
+        params.set("categories", userCategories.join(","));
+      }
+      params.set("page", String(pageNum));
+      params.set("limit", String(PAGE_SIZE));
+      return params;
+    },
+    [search, sourceFilter, categoryFilter, userCategories.join(",")]
+  );
 
-  const refreshListings = () => {
-    fetch(`/api/job-listings?${buildListingsParams().toString()}`)
-      .then((res) => res.json())
-      .then((data: unknown) => {
-        if (Array.isArray(data)) setListings(data as JobListing[]);
-      })
-      .catch(() => setListings([]));
-  };
+  const filtersKey = `${search}|${sourceFilter}|${categoryFilter}|${userCategories.join(",")}`;
+  const prevFiltersKey = useRef(filtersKey);
+  const skipNextFetchRef = useRef(false);
+
+  const fetchListings = useCallback(
+    (pageNum: number) => {
+      setLoading(true);
+      fetch(`/api/job-listings?${buildListingsParams(pageNum)}`)
+        .then((res) => res.json())
+        .then((data: unknown) => {
+          if (!data || typeof data !== "object" || !("items" in data)) {
+            setListings([]);
+            setTotal(0);
+            setTotalPages(1);
+            return;
+          }
+          const d = data as { items: JobListing[]; total: number; page: number; totalPages: number };
+          setListings(Array.isArray(d.items) ? d.items : []);
+          setTotal(typeof d.total === "number" ? d.total : 0);
+          setTotalPages(typeof d.totalPages === "number" ? d.totalPages : 1);
+        })
+        .catch(() => {
+          setListings([]);
+          setTotal(0);
+          setTotalPages(1);
+        })
+        .finally(() => setLoading(false));
+    },
+    [buildListingsParams]
+  );
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetch(`/api/job-listings?${buildListingsParams().toString()}`)
-      .then((res) => res.json())
-      .then((data: unknown) => {
-        if (cancelled || !Array.isArray(data)) return;
-        setListings(data as JobListing[]);
-      })
-      .catch(() => {
-        if (!cancelled) setListings([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [search, sourceFilter, categoryFilter, userCategories.join(",")]);
+    if (skipNextFetchRef.current) {
+      skipNextFetchRef.current = false;
+      return;
+    }
+    const filtersJustChanged = prevFiltersKey.current !== filtersKey;
+    if (filtersJustChanged) {
+      prevFiltersKey.current = filtersKey;
+      setPage(1);
+      skipNextFetchRef.current = true;
+    }
+    const pageToFetch = filtersJustChanged ? 1 : page;
+    fetchListings(pageToFetch);
+  }, [page, filtersKey, fetchListings]);
 
   const handleAddToApplications = async (listing: JobListing) => {
     setAddingId(listing.id);
@@ -138,14 +165,8 @@ export default function DiscoveredPage() {
       const saved = data.saved ?? 0;
       toast.success(`Scraping listo: ${scraped} vacantes obtenidas, ${saved} guardadas.`);
       if (data.warning) toast.warning(data.warning);
-      setLoading(true);
-      fetch(`/api/job-listings?${buildListingsParams().toString()}`)
-        .then((r) => r.json())
-        .then((list: unknown) => {
-          setListings(Array.isArray(list) ? list : []);
-        })
-        .catch(() => setListings([]))
-        .finally(() => setLoading(false));
+      setPage(1);
+      fetchListings(1);
     } catch {
       toast.error("Error al ejecutar el scraping");
     } finally {
@@ -153,11 +174,14 @@ export default function DiscoveredPage() {
     }
   };
 
+  const startItem = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(page * PAGE_SIZE, total);
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold flex items-center gap-2">
-          <Sparkles className="h-6 w-6" />
+    <div className="space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold sm:text-2xl flex items-center gap-2">
+          <Sparkles className="h-6 w-6 shrink-0" />
           Vacantes descubiertas
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
@@ -165,15 +189,14 @@ export default function DiscoveredPage() {
         </p>
       </div>
 
-      {/* Fuentes / qué se scrapea */}
-      <Card className="bg-muted/40">
+      <Card className="bg-muted/40 min-w-0 overflow-hidden">
         <CardHeader className="py-4">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Info className="h-4 w-4" />
+              <Info className="h-4 w-4 shrink-0" />
               ¿De dónde vienen estas vacantes?
             </CardTitle>
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" asChild className="w-fit">
               <Link href="/discovered/config" className="flex items-center gap-1.5">
                 <Settings className="h-4 w-4" />
                 Configuración
@@ -196,54 +219,65 @@ export default function DiscoveredPage() {
         </CardContent>
       </Card>
 
-      {/* Filtros y scraping manual */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar empresa o rol…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8"
-          />
-        </div>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Fuente" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las fuentes</SelectItem>
-            {SOURCES.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Categoría" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="mine">
-              Mis categorías{userCategories.length > 0 ? ` (${userCategories.length})` : ""}
-            </SelectItem>
-            <SelectItem value="all">Todas las categorías</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          onClick={handleRunScraping}
-          disabled={scrapingNow}
-        >
-          <RefreshCw className={`h-4 w-4 mr-1.5 ${scrapingNow ? "animate-spin" : ""}`} />
-          {scrapingNow ? "Ejecutando…" : "Ejecutar scraping ahora"}
-        </Button>
-      </div>
+      {/* Filtros y scraping */}
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="pb-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Search className="h-4 w-4 shrink-0" />
+            Filtros
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative flex-1 min-w-0 w-full sm:max-w-[220px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Buscar empresa o rol…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 w-full min-w-0"
+              />
+            </div>
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger className="w-full sm:w-[160px] min-w-0">
+                <SelectValue placeholder="Fuente" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las fuentes</SelectItem>
+                {SOURCES.map((s) => (
+                  <SelectItem key={s} value={s}>{s}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-[180px] min-w-0">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="mine">
+                  Mis categorías{userCategories.length > 0 ? ` (${userCategories.length})` : ""}
+                </SelectItem>
+                <SelectItem value="all">Todas las categorías</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              onClick={handleRunScraping}
+              disabled={scrapingNow}
+              className="w-full sm:w-auto shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1.5 shrink-0 ${scrapingNow ? "animate-spin" : ""}`} />
+              <span className="truncate">{scrapingNow ? "Ejecutando…" : "Ejecutar scraping"}</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Lista */}
+      {/* Lista y paginación */}
       {loading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i}>
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
+          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+            <Card key={i} className="min-w-0 flex flex-col">
               <CardHeader className="pb-2">
                 <Skeleton className="h-5 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -263,52 +297,96 @@ export default function DiscoveredPage() {
           actionHref="/applications"
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {listings.map((listing) => (
-            <Card key={listing.id} className="flex flex-col">
-              <CardHeader className="pb-2">
-                <h3 className="font-semibold leading-tight">{listing.role}</h3>
-                <p className="text-sm text-muted-foreground">{listing.company}</p>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <span className="text-xs px-2 py-0.5 rounded bg-muted">
-                    {listing.source}
-                  </span>
-                  {listing.category && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">
-                      {formatCategoryLabel(listing.category)}
+        <>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
+            {listings.map((listing) => (
+              <Card key={listing.id} className="flex flex-col min-w-0 overflow-hidden">
+                <CardHeader className="pb-2 min-w-0">
+                  <h3 className="font-semibold leading-tight truncate" title={listing.role}>
+                    {listing.role}
+                  </h3>
+                  <p className="text-sm text-muted-foreground truncate" title={listing.company}>
+                    {listing.company}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-muted shrink-0">
+                      {listing.source}
                     </span>
+                    {listing.category && (
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-primary/10 text-primary shrink-0">
+                        {formatCategoryLabel(listing.category)}
+                      </span>
+                    )}
+                    {listing.modality && (
+                      <span className="text-xs text-muted-foreground shrink-0">{listing.modality}</span>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0 mt-auto flex flex-wrap gap-2">
+                  {listing.offerLink && (
+                    <a
+                      href={listing.offerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex"
+                    >
+                      <Button variant="outline" size="sm" className="shrink-0">
+                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                        Ver oferta
+                      </Button>
+                    </a>
                   )}
-                  {listing.modality && (
-                    <span className="text-xs text-muted-foreground">{listing.modality}</span>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0 mt-auto flex flex-wrap gap-2">
-                {listing.offerLink && (
-                  <a
-                    href={listing.offerLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex"
+                  <Button
+                    size="sm"
+                    onClick={() => handleAddToApplications(listing)}
+                    disabled={addingId === listing.id}
+                    className="shrink-0"
                   >
-                    <Button variant="outline" size="sm">
-                      <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                      Ver oferta
+                    <PlusCircle className="h-3.5 w-3.5 mr-1" />
+                    {addingId === listing.id ? "Añadiendo…" : "Añadir"}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <Card className="min-w-0 overflow-hidden">
+              <CardContent className="py-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-muted-foreground order-2 sm:order-1">
+                    {startItem}–{endItem} de {total} vacantes
+                  </p>
+                  <div className="flex items-center gap-1 order-1 sm:order-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                      className="shrink-0"
+                      aria-label="Página anterior"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
                     </Button>
-                  </a>
-                )}
-                <Button
-                  size="sm"
-                  onClick={() => handleAddToApplications(listing)}
-                  disabled={addingId === listing.id}
-                >
-                  <PlusCircle className="h-3.5 w-3.5 mr-1" />
-                  {addingId === listing.id ? "Añadiendo…" : "Añadir a postulaciones"}
-                </Button>
+                    <span className="text-sm font-medium min-w-[6rem] text-center px-2">
+                      Página {page} de {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                      className="shrink-0"
+                      aria-label="Página siguiente"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
