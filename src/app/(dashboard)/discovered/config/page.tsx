@@ -18,8 +18,7 @@ type Source = {
 };
 
 type Config = {
-  schedule: string;
-  scheduleLabel: string;
+  scheduleTime: string;
   sources: Source[];
 };
 
@@ -41,7 +40,7 @@ export default function ScrapingConfigPage() {
       .then((res) => res.json())
       .then((data: unknown) => {
         if (cancelled) return;
-        if (data && typeof data === "object" && "scheduleLabel" in data && "sources" in data) {
+        if (data && typeof data === "object" && "scheduleTime" in data && "sources" in data) {
           setConfig(data as Config);
         }
       })
@@ -210,15 +209,9 @@ export default function ScrapingConfigPage() {
                 <Clock className="h-4 w-4" />
                 Frecuencia
               </h2>
-              <p className="text-sm text-muted-foreground">
-                El cron en Vercel llama a <code className="bg-muted px-1 rounded">/api/cron/scrape-jobs</code> según esta expresión.
-              </p>
             </CardHeader>
             <CardContent className="pt-0">
-              <p className="font-mono text-sm bg-muted/50 px-3 py-2 rounded-md inline-block">
-                {config.schedule}
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">{config.scheduleLabel}</p>
+              <p className="text-sm">{config.scheduleTime}</p>
             </CardContent>
           </Card>
 

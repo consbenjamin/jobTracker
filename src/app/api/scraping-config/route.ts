@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUserId } from "@/lib/auth";
-import { SCRAPE_SCHEDULE, SCRAPE_SCHEDULE_LABEL, SCRAPE_SOURCES, isSourceEnabled } from "@/lib/scraping/config";
+import { SCRAPE_SCHEDULE_TIME, SCRAPE_SOURCES, isSourceEnabled } from "@/lib/scraping/config";
 
 /**
  * Devuelve la configuración visible del scraping: frecuencia y fuentes (con enabled según env).
@@ -17,8 +17,7 @@ export async function GET() {
   }));
 
   return NextResponse.json({
-    schedule: SCRAPE_SCHEDULE,
-    scheduleLabel: SCRAPE_SCHEDULE_LABEL,
+    scheduleTime: SCRAPE_SCHEDULE_TIME,
     sources,
   });
 }
