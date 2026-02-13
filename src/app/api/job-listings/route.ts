@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const source = searchParams.get("source");
     const search = searchParams.get("search");
+    const modality = searchParams.get("modality"); // remoto | presencial | hibrido | unspecified
     const categoriesParam = searchParams.get("categories"); // comma-separated
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
     const limit = Math.min(50, Math.max(6, parseInt(searchParams.get("limit") ?? "12", 10) || 12));
@@ -38,6 +39,14 @@ export async function GET(request: NextRequest) {
         andParts.push({
           OR: [{ category: { in: list } }, { category: null }],
         });
+      }
+    }
+    if (modality?.trim()) {
+      const m = modality.trim().toLowerCase();
+      if (m === "unspecified" || m === "no especifica") {
+        andParts.push({ modality: null });
+      } else if (["remoto", "presencial", "hibrido"].includes(m)) {
+        andParts.push({ modality: m });
       }
     }
     const where = { AND: andParts };

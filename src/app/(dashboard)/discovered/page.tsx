@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
-import { Search, ExternalLink, PlusCircle, Info, Sparkles, Settings, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ExternalLink, PlusCircle, Info, Sparkles, Settings, RefreshCw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { toast } from "sonner";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE_OPTIONS = [6, 12, 24, 50] as const;
 
 type JobListing = {
   id: string;
@@ -33,6 +33,14 @@ type JobListing = {
 
 const SOURCES = ["Remotive", "RemoteOK", "LinkedIn"] as const;
 
+const MODALITY_OPTIONS = [
+  { value: "all", label: "Todas las modalidades" },
+  { value: "remoto", label: "Remoto" },
+  { value: "presencial", label: "Presencial" },
+  { value: "hibrido", label: "Híbrido" },
+  { value: "unspecified", label: "No especifica" },
+] as const;
+
 function formatCategoryLabel(slug: string | null): string {
   if (!slug) return "";
   return slug
@@ -46,9 +54,11 @@ export default function DiscoveredPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
+  const [modalityFilter, setModalityFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("mine");
   const [userCategories, setUserCategories] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -76,18 +86,20 @@ export default function DiscoveredPage() {
       const params = new URLSearchParams();
       if (search.trim()) params.set("search", search.trim());
       if (sourceFilter !== "all") params.set("source", sourceFilter);
+      if (modalityFilter !== "all") params.set("modality", modalityFilter);
       if (categoryFilter === "mine" && userCategories.length > 0) {
         params.set("categories", userCategories.join(","));
       }
       params.set("page", String(pageNum));
-      params.set("limit", String(PAGE_SIZE));
+      params.set("limit", String(pageSize));
       return params;
     },
-    [search, sourceFilter, categoryFilter, userCategories.join(",")]
+    [search, sourceFilter, modalityFilter, categoryFilter, pageSize, userCategories.join(",")]
   );
 
-  const filtersKey = `${search}|${sourceFilter}|${categoryFilter}|${userCategories.join(",")}`;
+  const filtersKey = `${search}|${sourceFilter}|${modalityFilter}|${categoryFilter}|${pageSize}|${userCategories.join(",")}`;
   const prevFiltersKey = useRef(filtersKey);
+  const prevPageSizeRef = useRef(pageSize);
   const skipNextFetchRef = useRef(false);
 
   const fetchListings = useCallback(
@@ -116,6 +128,17 @@ export default function DiscoveredPage() {
     },
     [buildListingsParams]
   );
+
+  // Refetch explícito cuando cambia pageSize (evita tener que cambiar de página para ver el resultado)
+  useEffect(() => {
+    if (prevPageSizeRef.current !== pageSize) {
+      prevPageSizeRef.current = pageSize;
+      prevFiltersKey.current = filtersKey; // filtersKey ya está actualizado en este render (incluye pageSize)
+      setPage(1);
+      skipNextFetchRef.current = true; // evita doble fetch del efecto principal
+      fetchListings(1);
+    }
+  }, [pageSize, fetchListings]);
 
   useEffect(() => {
     if (skipNextFetchRef.current) {
@@ -174,8 +197,8 @@ export default function DiscoveredPage() {
     }
   };
 
-  const startItem = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
-  const endItem = Math.min(page * PAGE_SIZE, total);
+  const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const endItem = Math.min(page * pageSize, total);
 
   return (
     <div className="space-y-4 sm:space-y-6 min-w-0 overflow-x-hidden">
@@ -249,6 +272,16 @@ export default function DiscoveredPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={modalityFilter} onValueChange={setModalityFilter}>
+              <SelectTrigger className="w-full sm:w-[180px] min-w-0">
+                <SelectValue placeholder="Modalidad" />
+              </SelectTrigger>
+              <SelectContent>
+                {MODALITY_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full sm:w-[180px] min-w-0">
                 <SelectValue placeholder="Categoría" />
@@ -276,7 +309,7 @@ export default function DiscoveredPage() {
       {/* Lista y paginación */}
       {loading ? (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-w-0">
-          {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+          {Array.from({ length: Math.min(pageSize, 12) }).map((_, i) => (
             <Card key={i} className="min-w-0 flex flex-col">
               <CardHeader className="pb-2">
                 <Skeleton className="h-5 w-3/4" />
@@ -350,14 +383,49 @@ export default function DiscoveredPage() {
             ))}
           </div>
 
-          {totalPages > 1 && (
+          {listings.length > 0 && (
             <Card className="min-w-0 overflow-hidden">
               <CardContent className="py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-muted-foreground order-2 sm:order-1">
-                    {startItem}–{endItem} de {total} vacantes
-                  </p>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 order-2 sm:order-1">
+                    <p className="text-sm text-muted-foreground">
+                      {startItem}–{endItem} de {total} vacantes
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">Mostrar</span>
+                      <Select
+                        value={String(pageSize)}
+                        onValueChange={(v) => {
+                          const n = parseInt(v, 10);
+                          if (!isNaN(n)) {
+                            setPageSize(n);
+                            setPage(1);
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-[70px] h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAGE_SIZE_OPTIONS.map((n) => (
+                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm text-muted-foreground whitespace-nowrap">por página</span>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-1 order-1 sm:order-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(1)}
+                      disabled={page <= 1}
+                      className="shrink-0"
+                      aria-label="Primera página"
+                    >
+                      <ChevronsLeft className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -380,6 +448,16 @@ export default function DiscoveredPage() {
                       aria-label="Página siguiente"
                     >
                       <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(totalPages)}
+                      disabled={page >= totalPages}
+                      className="shrink-0"
+                      aria-label="Última página"
+                    >
+                      <ChevronsRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
