@@ -97,10 +97,11 @@ export default function DiscoveredPage() {
     [search, sourceFilter, modalityFilter, categoryFilter, pageSize, userCategories.join(",")]
   );
 
-  const filtersKey = `${search}|${sourceFilter}|${modalityFilter}|${categoryFilter}|${pageSize}|${userCategories.join(",")}`;
+  const filtersKey = `${search}|${sourceFilter}|${modalityFilter}|${categoryFilter}|${userCategories.join(",")}`;
   const prevFiltersKey = useRef(filtersKey);
   const prevPageSizeRef = useRef(pageSize);
-  const skipNextFetchRef = useRef(false);
+  const prevPageRef = useRef(page);
+  const isPageSizeChangeRef = useRef(false);
 
   const fetchListings = useCallback(
     (pageNum: number) => {
@@ -129,30 +130,37 @@ export default function DiscoveredPage() {
     [buildListingsParams]
   );
 
-  // Refetch explícito cuando cambia pageSize (evita tener que cambiar de página para ver el resultado)
+  // Refetch cuando cambia pageSize (resetea a página 1)
   useEffect(() => {
     if (prevPageSizeRef.current !== pageSize) {
       prevPageSizeRef.current = pageSize;
-      prevFiltersKey.current = filtersKey; // filtersKey ya está actualizado en este render (incluye pageSize)
+      prevPageRef.current = 1;
+      isPageSizeChangeRef.current = true;
       setPage(1);
-      skipNextFetchRef.current = true; // evita doble fetch del efecto principal
       fetchListings(1);
     }
   }, [pageSize, fetchListings]);
 
+  // Refetch cuando cambian los filtros (resetea a página 1) o cuando cambia la página
   useEffect(() => {
-    if (skipNextFetchRef.current) {
-      skipNextFetchRef.current = false;
+    // Si el cambio de página fue causado por un cambio de pageSize, ignorar
+    if (isPageSizeChangeRef.current) {
+      isPageSizeChangeRef.current = false;
       return;
     }
+    
     const filtersJustChanged = prevFiltersKey.current !== filtersKey;
+    const pageJustChanged = prevPageRef.current !== page;
+    
     if (filtersJustChanged) {
       prevFiltersKey.current = filtersKey;
+      prevPageRef.current = 1;
       setPage(1);
-      skipNextFetchRef.current = true;
+      fetchListings(1);
+    } else if (pageJustChanged) {
+      prevPageRef.current = page;
+      fetchListings(page);
     }
-    const pageToFetch = filtersJustChanged ? 1 : page;
-    fetchListings(pageToFetch);
   }, [page, filtersKey, fetchListings]);
 
   const handleAddToApplications = async (listing: JobListing) => {
