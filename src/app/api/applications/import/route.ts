@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { verifyBearerTokenAndGetUserId } from "@/lib/extension-token";
 
 function parseCsv(text: string): Record<string, string>[] {
   const lines = text.trim().split(/\r?\n/);
@@ -34,9 +35,14 @@ function parseCsv(text: string): Record<string, string>[] {
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = await getSessionUserId();
+    // 1) Intentar autenticar por Bearer token (extensión)
+    let userId = await verifyBearerTokenAndGetUserId(request);
+    // 2) Si no hay token válido, caer a sesión normal
     if (!userId) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+      userId = await getSessionUserId();
+      if (!userId) {
+        return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+      }
     }
 
     let csvText: string;

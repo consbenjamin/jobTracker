@@ -33,6 +33,13 @@ export default function ScrapingConfigPage() {
   const [jobCategoriesList, setJobCategoriesList] = useState<JobCategory[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [categoriesSaving, setCategoriesSaving] = useState(false);
+  const [extensionTokenInfo, setExtensionTokenInfo] = useState<{
+    hasToken: boolean;
+    last4?: string;
+    createdAt?: string | null;
+  } | null>(null);
+  const [extensionTokenLoading, setExtensionTokenLoading] = useState(true);
+  const [extensionTokenRotating, setExtensionTokenRotating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +56,32 @@ export default function ScrapingConfigPage() {
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/user/extension-token")
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        if (cancelled) return;
+        if (data && typeof data === "object" && "hasToken" in data) {
+          const d = data as {
+            hasToken: boolean;
+            last4?: string;
+            createdAt?: string | null;
+          };
+          setExtensionTokenInfo(d);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setExtensionTokenInfo(null);
+      })
+      .finally(() => {
+        if (!cancelled) setExtensionTokenLoading(false);
       });
     return () => {
       cancelled = true;
@@ -170,6 +203,63 @@ export default function ScrapingConfigPage() {
     }
   };
 
+  const handleRotateExtensionToken = async () => {
+    setExtensionTokenRotating(true);
+    try {
+      const res = await fetch("/api/user/extension-token", {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al generar token");
+        return;
+      }
+      const { token, last4, createdAt } = data as {
+        token: string;
+        last4: string;
+        createdAt?: string;
+      };
+      setExtensionTokenInfo({
+        hasToken: true,
+        last4,
+        createdAt: createdAt ?? null,
+      });
+      await navigator.clipboard
+        .writeText(token)
+        .then(() => {
+          toast.success("Nuevo token generado y copiado. Pégalo en la extensión.");
+        })
+        .catch(() => {
+          toast.success("Nuevo token generado. Cópialo manualmente desde la respuesta.");
+          console.log("Extension token:", token);
+        });
+    } catch {
+      toast.error("Error al generar token");
+    } finally {
+      setExtensionTokenRotating(false);
+    }
+  };
+
+  const handleRevokeExtensionToken = async () => {
+    setExtensionTokenRotating(true);
+    try {
+      const res = await fetch("/api/user/extension-token", {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al revocar token");
+        return;
+      }
+      setExtensionTokenInfo({ hasToken: false });
+      toast.success("Token de extensión revocado.");
+    } catch {
+      toast.error("Error al revocar token");
+    } finally {
+      setExtensionTokenRotating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -212,6 +302,71 @@ export default function ScrapingConfigPage() {
             </CardHeader>
             <CardContent className="pt-0">
               <p className="text-sm">{config.scheduleTime}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-base font-medium flex items-center gap-2">
+                <Key className="h-4 w-4" />
+                Token para extensión de navegador
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Genera un token Bearer para la extensión de Chrome/Brave. Se usa solo cuando haces clic en
+                &nbsp;<span className="font-medium">“Guardar en JobTracker”</span> en LinkedIn.
+              </p>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              {extensionTokenLoading ? (
+                <Skeleton className="h-10 w-full max-w-md" />
+              ) : extensionTokenInfo?.hasToken ? (
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground">
+                    Tienes un token activo. Últimos 4 dígitos:{" "}
+                    <span className="font-mono">
+                      {extensionTokenInfo.last4 ? `••••${extensionTokenInfo.last4}` : "desconocido"}
+                    </span>
+                    {extensionTokenInfo.createdAt && (
+                      <>
+                        {" "}
+                        · creado el{" "}
+                        {new Date(extensionTokenInfo.createdAt).toLocaleDateString()}
+                      </>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRotateExtensionToken}
+                      disabled={extensionTokenRotating}
+                    >
+                      {extensionTokenRotating ? "Rotando…" : "Rotar y copiar nuevo token"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRevokeExtensionToken}
+                      disabled={extensionTokenRotating}
+                    >
+                      Revocar token
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-sm">
+                  <p className="text-muted-foreground">
+                    No tienes token configurado. Genera uno y pégalo en las opciones de la extensión de navegador.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={handleRotateExtensionToken}
+                    disabled={extensionTokenRotating}
+                  >
+                    {extensionTokenRotating ? "Generando…" : "Generar token y copiar"}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

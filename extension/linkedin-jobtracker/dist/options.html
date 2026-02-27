@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>JobTracker LinkedIn Saver – Options</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        margin: 16px;
+        max-width: 640px;
+      }
+      h1 {
+        font-size: 20px;
+        margin-bottom: 4px;
+      }
+      p {
+        font-size: 13px;
+        color: #4b5563;
+      }
+      label {
+        display: block;
+        margin-top: 12px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      input {
+        width: 100%;
+        padding: 6px 8px;
+        font-size: 13px;
+        box-sizing: border-box;
+        margin-top: 4px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      button {
+        padding: 6px 10px;
+        font-size: 13px;
+        border-radius: 999px;
+        border: 1px solid #0a66c2;
+        background: #0a66c2;
+        color: #ffffff;
+        cursor: pointer;
+      }
+      button.secondary {
+        border-color: #d1d5db;
+        background: #f9fafb;
+        color: #111827;
+      }
+      #status {
+        margin-top: 8px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>JobTracker LinkedIn Saver</h1>
+    <p>
+      Configure the base URL of your JobTracker and the Bearer token generated
+      in your JobTracker settings.
+    </p>
+
+    <label>
+      JobTracker base URL
+      <input id="baseUrl" type="text" placeholder="https://job-tracker-tool.vercel.app" />
+    </label>
+
+    <label>
+      Extension token (Bearer)
+      <input
+        id="token"
+        type="password"
+        placeholder="Paste your JobTracker extension token here"
+      />
+    </label>
+
+    <div class="row">
+      <button id="save">Save</button>
+      <button id="useLocal" class="secondary">Use localhost:3000 (dev)</button>
+    </div>
+
+    <div id="status"></div>
+
+    <script src="options.js"></script>
+  </body>
+  </html>
+

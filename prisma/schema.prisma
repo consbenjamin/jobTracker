@@ -42,6 +42,11 @@ model User {
   password              String?      @db.Text
   serpApiKeyEncrypted   String?      @db.Text
   jobCategories         String?      @db.Text // JSON array: ["software-development", "marketing", ...]
+  // Token para la extensión de navegador (Chrome/Brave, etc.)
+  extensionTokenHash    String?      @db.Text
+  extensionTokenLast4   String?
+  extensionTokenCreatedAt DateTime?
+  extensionTokenLastUsedAt DateTime?
   accounts              Account[]
   sessions              Session[]
   applications          Application[]

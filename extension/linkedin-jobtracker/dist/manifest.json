@@ -1,16 +1,24 @@
 {
   "manifest_version": 3,
   "name": "JobTracker LinkedIn Saver",
-  "description": "Añade un botón \"Guardar en JobTracker\" en ofertas de LinkedIn y las envía a tu JobTracker.",
+  "description": "Add a \"Save to JobTracker\" button on LinkedIn jobs and send them to your JobTracker account.",
   "version": "0.1.0",
   "permissions": [
-    "scripting",
-    "activeTab"
+    "storage"
   ],
   "host_permissions": [
     "https://www.linkedin.com/*",
+    "https://job-tracker-tool.vercel.app/*"
+  ],
+  "optional_host_permissions": [
     "http://localhost:3000/*"
   ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -23,6 +31,10 @@
       "js": ["content-linkedin.js"],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
 }
 

@@ -1,8 +1,3 @@
-// URL base fija de tu JobTracker en desarrollo.
-// No usamos process.env aquí porque el service worker corre en el navegador,
-// no en Node, y rompería el script.
-const JOBTRACKER_BASE_URL = "http://localhost:3000";
-
 type LinkedInJobPayload = {
   title?: string;
   company?: string;
@@ -13,6 +8,24 @@ type LinkedInJobPayload = {
   description?: string;
 };
 
+function getConfig(): Promise<{ baseUrl: string; token: string }> {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(
+      {
+        jobtrackerBaseUrl: "https://job-tracker-tool.vercel.app",
+        jobtrackerToken: "",
+      },
+      (items: { jobtrackerBaseUrl?: string; jobtrackerToken?: string }) => {
+        resolve({
+          baseUrl:
+            (items.jobtrackerBaseUrl || "https://job-tracker-tool.vercel.app").replace(/\/+$/, ""),
+          token: items.jobtrackerToken || "",
+        });
+      }
+    );
+  });
+}
+
 chrome.runtime.onMessage.addListener(
   (message: any, _sender: any, sendResponse: (response: any) => void) => {
   if (!message || typeof message !== "object") return;
@@ -22,14 +35,24 @@ chrome.runtime.onMessage.addListener(
 
     (async () => {
       try {
+        const { baseUrl, token } = await getConfig();
+        if (!token || !baseUrl) {
+          sendResponse({
+            ok: false,
+            error:
+              "JobTracker extension is not configured. Set base URL and token in the extension options.",
+          });
+          return;
+        }
+
         const res = await fetch(
-          `${JOBTRACKER_BASE_URL}/api/applications/import`,
+          `${baseUrl}/api/applications/import`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
-            credentials: "include",
             body: JSON.stringify({ job: payload }),
           }
         );

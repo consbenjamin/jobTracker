@@ -1,8 +1,17 @@
 "use strict";
-// URL base fija de tu JobTracker en desarrollo.
-// No usamos process.env aquí porque el service worker corre en el navegador,
-// no en Node, y rompería el script.
-const JOBTRACKER_BASE_URL = "http://localhost:3000";
+function getConfig() {
+    return new Promise((resolve) => {
+        chrome.storage.sync.get({
+            jobtrackerBaseUrl: "https://job-tracker-tool.vercel.app",
+            jobtrackerToken: "",
+        }, (items) => {
+            resolve({
+                baseUrl: (items.jobtrackerBaseUrl || "https://job-tracker-tool.vercel.app").replace(/\/+$/, ""),
+                token: items.jobtrackerToken || "",
+            });
+        });
+    });
+}
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!message || typeof message !== "object")
         return;
@@ -10,12 +19,20 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         const payload = message.payload;
         (async () => {
             try {
-                const res = await fetch(`${JOBTRACKER_BASE_URL}/api/applications/import`, {
+                const { baseUrl, token } = await getConfig();
+                if (!token || !baseUrl) {
+                    sendResponse({
+                        ok: false,
+                        error: "JobTracker extension is not configured. Set base URL and token in the extension options.",
+                    });
+                    return;
+                }
+                const res = await fetch(`${baseUrl}/api/applications/import`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
                     },
-                    credentials: "include",
                     body: JSON.stringify({ job: payload }),
                 });
                 if (!res.ok) {
