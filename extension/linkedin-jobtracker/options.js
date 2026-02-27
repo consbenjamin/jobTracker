@@ -65,8 +65,16 @@ function useLocalhost() {
 document.addEventListener("DOMContentLoaded", () => {
   loadOptions();
   const saveBtn = $("save");
+  const prodBtn = $("useProd");
   const localBtn = $("useLocal");
   if (saveBtn) saveBtn.addEventListener("click", saveOptions);
+  if (prodBtn)
+    prodBtn.addEventListener("click", () => {
+      const baseUrlInput = $("baseUrl");
+      if (baseUrlInput) baseUrlInput.value = DEFAULT_BASE_URL;
+      saveOptions();
+      setStatus("Switched to production URL.");
+    });
   if (localBtn) localBtn.addEventListener("click", useLocalhost);
 });
 
