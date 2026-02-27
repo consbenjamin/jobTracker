@@ -1,0 +1,12 @@
+{
+  "name": "jobtracker-linkedin-extension",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc && node ./scripts/copy-static.cjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
+
