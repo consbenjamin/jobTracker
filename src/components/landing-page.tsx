@@ -17,7 +17,6 @@ import {
   FileSpreadsheet,
   Target,
   Globe,
-  Settings,
   Rss,
   Puzzle,
 } from "lucide-react";
@@ -26,18 +25,13 @@ import { Button } from "@/components/ui/button";
 const features = [
   {
     icon: Puzzle,
-    title: "Extensión LinkedIn Job Tracker",
-    description: "Instala la extensión en Chrome: desde cualquier oferta en LinkedIn usa «Guardar en JobTracker» y la postulación se crea en tu cuenta con empresa, rol y enlace. Configura la URL de tu JobTracker y tu token Bearer en las opciones de la extensión.",
+    title: "Extensión LinkedIn",
+    description: "En Chrome, desde cualquier oferta en LinkedIn usá «Guardar en JobTracker» y la postulación se crea en tu cuenta al instante.",
   },
   {
     icon: Globe,
     title: "Vacantes descubiertas",
-    description: "Ofertas automáticas desde Remotive, RemoteOK y Google Jobs (SerpApi). Lista con filtros por fuente y búsqueda; ejecuta el scraping cuando quieras o con cron diario.",
-  },
-  {
-    icon: Settings,
-    title: "Configuración de scraping",
-    description: "Activa o desactiva fuentes (Remotive, RemoteOK, Google Jobs). Opcional: añade tu API key de SerpApi para más ofertas; se guarda cifrada por usuario.",
+    description: "Ofertas automáticas desde varias fuentes. Lista con filtros; convertí cualquier vacante en postulación con un clic.",
   },
   {
     icon: Rss,
@@ -149,7 +143,7 @@ export function LandingPage() {
             className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto text-pretty px-1"
             variants={fadeUp}
           >
-            Vacantes descubiertas desde Remotive, RemoteOK y Google Jobs; extensión para guardar ofertas desde LinkedIn en un clic; Kanban, contactos, interacciones, tareas y analytics en un solo lugar. Tema claro/oscuro, PWA instalable y sin complicaciones.
+            Vacantes automáticas, extensión para LinkedIn, Kanban, contactos, tareas y analytics. Tema claro/oscuro y PWA.
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-stretch sm:items-center pt-2 px-1"
@@ -194,8 +188,8 @@ export function LandingPage() {
             viewport={{ once: true, margin: "-40px" }}
           >
             {[
-              "Extensión LinkedIn: guarda ofertas desde LinkedIn en un clic; configura URL y token en la extensión y genera el token en Configuración de scraping",
-              "Vacantes descubiertas: Remotive, RemoteOK, Google Jobs; filtros, scraping manual o cron diario; convertir en postulación en un clic",
+              "Extensión LinkedIn: guardá ofertas desde LinkedIn en un clic",
+              "Vacantes descubiertas: varias fuentes, filtros y pasar a postulación en un clic",
               "Empresa, rol, link, fuente, estado, seniority, modalidad, salario esperado, stack, notas",
               "Checklist: portfolio, formulario externo, referral",
               "Timeline de actividades e historial de cambios",
