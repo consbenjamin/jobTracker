@@ -4,12 +4,31 @@ function queryText(selector) {
     const text = el?.innerText?.trim();
     return text || undefined;
 }
+/** Prueba varios selectores y devuelve el primer texto no vacío. */
+function queryFirstText(selectors) {
+    for (const sel of selectors) {
+        const t = queryText(sel);
+        if (t && t.length > 0)
+            return t;
+    }
+    return undefined;
+}
 function getJobFromLinkedIn() {
-    // Estos selectores son aproximados y pueden requerir ajustes
-    let title = queryText(".job-details-jobs-unified-top-card__job-title") ??
-        queryText("h1");
-    let company = queryText(".job-details-jobs-unified-top-card__company-name a") ??
-        queryText(".job-details-jobs-unified-top-card__company-name");
+    // Título del trabajo: elemento con clases t-24 y job-details-jobs-unified-top-card__job-title
+    const titleSelectors = [
+        ".t-24.job-details-jobs-unified-top-card__job-title",
+        ".job-details-jobs-unified-top-card__job-title",
+        ".jobs-unified-top-card__job-title",
+        "h1",
+    ];
+    let title = queryFirstText(titleSelectors);
+    // Nombre de la empresa: job-details-jobs-unified-top-card__company-name
+    const companySelectors = [
+        ".job-details-jobs-unified-top-card__company-name",
+        ".job-details-jobs-unified-top-card__company-name a",
+        ".jobs-unified-top-card__company-name",
+    ];
+    let company = queryFirstText(companySelectors);
     const location = queryText(".job-details-jobs-unified-top-card__primary-description") ??
         queryText(".jobs-unified-top-card__bullet");
     const descriptionEl = document.querySelector(".jobs-description-content__text");

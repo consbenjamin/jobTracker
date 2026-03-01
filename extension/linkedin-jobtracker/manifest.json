@@ -28,13 +28,26 @@
       "matches": [
         "https://www.linkedin.com/jobs/*"
       ],
-      "js": ["content-linkedin.js"],
+      "js": [
+        "content-linkedin.js"
+      ],
       "run_at": "document_idle"
     }
   ],
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "tileset/*.json",
+        "layer/*.json",
+        "sound/*.ogg"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }
-
