@@ -210,6 +210,18 @@ export function ApplicationDetail({
                 <Link2 className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">{linkCopied ? "Link copiado" : "Copiar link"}</span>
               </Button>
+              {application.offerLink && (
+                <Button asChild variant="outline" size="sm">
+                  <a
+                    href={application.offerLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Link2 className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Ver oferta</span>
+                  </a>
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                 Editar
               </Button>
