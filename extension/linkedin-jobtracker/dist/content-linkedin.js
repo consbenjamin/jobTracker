@@ -73,8 +73,11 @@ function getJobFromLinkedIn() {
 }
 function createSaveButton() {
     const btn = document.createElement("button");
-    btn.textContent = "Guardar en JobTracker";
     btn.id = "jobtracker-save-button";
+    // Estilos generales del botón
+    btn.style.display = "inline-flex";
+    btn.style.alignItems = "center";
+    btn.style.gap = "8px";
     btn.style.cursor = "pointer";
     btn.style.borderRadius = "999px";
     btn.style.border = "1px solid #0a66c2";
@@ -87,6 +90,14 @@ function createSaveButton() {
     btn.style.bottom = "24px";
     btn.style.left = "24px";
     btn.style.zIndex = "999999";
+    // Icono al lado del texto
+    const icon = document.createElement("span");
+    icon.textContent = "➕";
+    icon.style.display = "inline-flex";
+    const label = document.createElement("span");
+    label.textContent = "Guardar en JobTracker";
+    btn.appendChild(icon);
+    btn.appendChild(label);
     return btn;
 }
 function showToast(message, type = "success") {
