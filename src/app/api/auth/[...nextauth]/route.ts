@@ -7,9 +7,12 @@ function isValidRedirectUrl(url: string | null): boolean {
   if (!url || typeof url !== "string") return false;
   const u = url.trim();
   if (u === "" || u === "[]" || u === "null" || u === "undefined") return false;
+  // Rechazar cualquier URL que contenga "[]" (bug conocido con Google/GitHub OAuth)
+  if (u.includes("[]")) return false;
   if (u.startsWith("/") && !u.startsWith("//")) return true;
   try {
-    new URL(u);
+    const parsed = new URL(u);
+    if (parsed.pathname.includes("[]")) return false;
     return true;
   } catch {
     return false;
@@ -49,11 +52,13 @@ async function wrapHandler(
     } catch {
       return res;
     }
-    if (body === "[]" || body?.trim() === "[]") {
+    const bodyTrimmed = body?.trim() ?? "";
+    // Respuesta "[]" o "null": bug conocido con OAuth (Google/GitHub). Redirigir a home.
+    if (bodyTrimmed === "[]" || bodyTrimmed === "null") {
       return buildRedirectToHome(req, res);
     }
     try {
-      const data = JSON.parse(body);
+      const data = JSON.parse(body ?? "{}");
       if (Array.isArray(data) && data.length === 0) {
         return buildRedirectToHome(req, res);
       }

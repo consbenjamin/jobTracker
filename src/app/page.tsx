@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Briefcase, BarChart3, PlusCircle, TrendingUp, Calendar, Award, Star } from "lucide-react";
+import { Briefcase, BarChart3, PlusCircle, TrendingUp, Calendar, Award, Star, Puzzle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -203,6 +203,29 @@ function DashboardContent() {
               <Link href="/analytics" className="flex items-center justify-center min-w-0">
                 Ver analytics
               </Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Puzzle className="h-5 w-5 shrink-0" />
+              Extensión para LinkedIn
+            </CardTitle>
+            <CardDescription>
+              Captura una vacante de LinkedIn y añádela a Postulaciones con un clic desde el navegador.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
+              <a
+                href="https://chromewebstore.google.com/detail/jobtracker-linkedin-saver/cncgbgfaofodegldoicoohgofnfjbaaf?hl=es"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center min-w-0"
+              >
+                Instalar en Chrome
+              </a>
             </Button>
           </CardContent>
         </Card>
