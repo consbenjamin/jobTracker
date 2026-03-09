@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Bell, Calendar, MessageSquare, Settings } from "lucide-react";
+import { ensureArray } from "@/lib/utils";
 
 type Application = {
   id: string;
@@ -48,7 +49,7 @@ export function RemindersBlock() {
   useEffect(() => {
     fetch("/api/applications")
       .then((res) => res.json())
-      .then(setApplications)
+      .then((data) => setApplications(ensureArray<Application>(data)))
       .finally(() => setLoading(false));
   }, []);
 

@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { APPLICATION_STATUSES, STATUS_COLORS, STATUS_LABELS } from "@/lib/constants";
+import { ensureArray } from "@/lib/utils";
 import { BarChart3 } from "lucide-react";
 
 type Application = {
@@ -37,7 +38,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     fetch("/api/applications")
       .then((res) => res.json())
-      .then(setApplications)
+      .then((data) => setApplications(ensureArray<Application>(data)))
       .finally(() => setLoading(false));
   }, []);
 

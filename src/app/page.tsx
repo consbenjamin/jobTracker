@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { RemindersBlock } from "@/components/reminders-block";
 import { LandingPage } from "@/components/landing-page";
+import { ensureArray } from "@/lib/utils";
 
 type Application = {
   id: string;
@@ -63,7 +64,7 @@ function DashboardContent() {
   useEffect(() => {
     fetch("/api/applications")
       .then((res) => res.json())
-      .then(setApplications)
+      .then((data) => setApplications(ensureArray<Application>(data)))
       .catch(() => setApplications([]))
       .finally(() => setLoading(false));
   }, []);

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { PlusCircle, Briefcase, LayoutGrid, List, Search, Download, Star, Calendar, RotateCcw } from "lucide-react";
 import { APPLICATION_STATUSES, STATUS_LABELS } from "@/lib/constants";
+import { ensureArray } from "@/lib/utils";
 
 type Application = {
   id: string;
@@ -104,7 +105,7 @@ export default function ApplicationsPage() {
     fetch("/api/applications")
       .then((res) => res.json())
       .then((data) => {
-        setApplications(data);
+        setApplications(ensureArray<Application>(data));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -114,7 +115,7 @@ export default function ApplicationsPage() {
     if (showLoading) setLoading(true);
     fetch("/api/applications")
       .then((res) => res.json())
-      .then(setApplications)
+      .then((data) => setApplications(ensureArray<Application>(data)))
       .finally(() => setLoading(false));
   };
 
