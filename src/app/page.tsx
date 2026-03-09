@@ -3,7 +3,19 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { Briefcase, BarChart3, PlusCircle, TrendingUp, Calendar, Award, Star, Puzzle } from "lucide-react";
+import {
+  Briefcase,
+  BarChart3,
+  PlusCircle,
+  TrendingUp,
+  Calendar,
+  Award,
+  Star,
+  Puzzle,
+  ArrowUpRight,
+  CheckCircle2,
+  Chrome,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -206,27 +218,61 @@ function DashboardContent() {
             </Button>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Puzzle className="h-5 w-5 shrink-0" />
-              Extensión para LinkedIn
-            </CardTitle>
-            <CardDescription>
-              Captura una vacante de LinkedIn y añádela a Postulaciones con un clic desde el navegador.
-            </CardDescription>
+        <Card className="relative overflow-hidden border-primary/20 bg-gradient-to-br from-card via-card to-primary/5 shadow-sm sm:col-span-2 md:col-span-3">
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-primary/15 via-primary/5 to-transparent md:block"
+            aria-hidden
+          />
+          <CardHeader className="relative gap-4 pb-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-4">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                  <Chrome className="h-3.5 w-3.5 shrink-0" />
+                  Disponible en Chrome
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 text-primary shadow-sm">
+                    <Puzzle className="h-5 w-5 shrink-0" />
+                  </div>
+                  <div className="space-y-2">
+                    <CardTitle className="text-xl sm:text-2xl">
+                      Extensión para LinkedIn
+                    </CardTitle>
+                    <CardDescription className="max-w-2xl text-sm leading-6 sm:text-base">
+                      Captura una vacante de LinkedIn y añádela a Postulaciones con un clic, sin copiar y pegar datos manualmente.
+                    </CardDescription>
+                  </div>
+                </div>
+              </div>
+              <Button asChild className="w-full min-w-0 sm:w-auto">
+                <a
+                  href="https://chromewebstore.google.com/detail/jobtracker-linkedin-saver/cncgbgfaofodegldoicoohgofnfjbaaf?hl=es"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 min-w-0"
+                >
+                  Instalar en Chrome
+                  <ArrowUpRight className="h-4 w-4 shrink-0" />
+                </a>
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
-              <a
-                href="https://chromewebstore.google.com/detail/jobtracker-linkedin-saver/cncgbgfaofodegldoicoohgofnfjbaaf?hl=es"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center min-w-0"
-              >
-                Instalar en Chrome
-              </a>
-            </Button>
+          <CardContent className="relative">
+            <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-3">
+              {[
+                "Guarda ofertas directamente desde LinkedIn.",
+                "Empresa, rol y enlace se completan más rápido.",
+                "Tu flujo sigue en Postulaciones como siempre.",
+              ].map((item) => (
+                <div
+                  key={item}
+                  className="flex items-start gap-2 rounded-xl border border-border/60 bg-background/70 p-3 backdrop-blur-sm"
+                >
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
