@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET?.trim()) {
   throw new Error("AUTH_SECRET es obligatorio en producción. Genera uno con: openssl rand -base64 32");
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   trustHost: true,
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
@@ -90,9 +90,3 @@ export async function getSessionUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
-/** Devuelve el userId o lanza Response 401. Usar en API routes. */
-export async function requireAuth(): Promise<string> {
-  const userId = await getSessionUserId();
-  if (!userId) throw new Response(JSON.stringify({ error: "No autorizado" }), { status: 401 });
-  return userId;
-}

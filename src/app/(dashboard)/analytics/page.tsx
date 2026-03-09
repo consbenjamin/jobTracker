@@ -9,10 +9,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
   Cell,
-  Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -116,7 +113,6 @@ export default function AnalyticsPage() {
   ).length;
   const total = applications.length;
   const responseRate = total > 0 ? Math.round((withResponse / total) * 100) : 0;
-  const ghostRate = total > 0 ? 100 - responseRate : 0;
 
   // Funnel por estado
   const funnelData = STATUS_ORDER.map((status) => ({

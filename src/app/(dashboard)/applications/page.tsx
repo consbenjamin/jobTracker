@@ -17,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PlusCircle, Briefcase, LayoutGrid, List, Search, Download, Star, Calendar, RotateCcw } from "lucide-react";
-import { toast } from "sonner";
 import { APPLICATION_STATUSES, STATUS_LABELS } from "@/lib/constants";
 
 type Application = {

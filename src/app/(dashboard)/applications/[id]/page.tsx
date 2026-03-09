@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
@@ -34,7 +34,6 @@ type Application = {
 
 export default function ApplicationDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   const { focusMode, setFocusMode } = useFocusMode();
   const [application, setApplication] = useState<Application | null>(null);

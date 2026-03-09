@@ -11,8 +11,6 @@ import {
   DEFAULT_JOB_CATEGORIES,
 } from "@/lib/job-categories";
 
-export type { ScrapedJob } from "./types";
-
 /** Categorías a scrapear en Remotive: unión de las que piden los usuarios, o por defecto software-development. Máx 4 requests/día recomendado. */
 const REMOTIVE_MAX_CATEGORIES = 4;
 
@@ -28,19 +26,6 @@ async function getRemotiveCategories(): Promise<string[]> {
   }
   const list = set.size > 0 ? Array.from(set) : [...DEFAULT_JOB_CATEGORIES];
   return list.slice(0, REMOTIVE_MAX_CATEGORIES);
-}
-
-/**
- * Ejecuta los scrapers habilitados (ENABLE_*) en paralelo. Para uso con API key global únicamente.
- */
-export async function runAllScrapers(): Promise<ScrapedJob[]> {
-  const categories = await getRemotiveCategories();
-  const promises: Promise<ScrapedJob[]>[] = [];
-  if (isSourceEnabled("ENABLE_REMOTIVE")) promises.push(scrapeRemotive(categories));
-  if (isSourceEnabled("ENABLE_REMOTEOK")) promises.push(scrapeRemoteOK());
-  if (isSourceEnabled("ENABLE_LINKEDIN")) promises.push(scrapeLinkedIn());
-  const results = await Promise.all(promises);
-  return deduplicate(results.flat());
 }
 
 /**
@@ -122,7 +107,7 @@ const userIdForUnique = (userId: string | null | undefined) => userId ?? null;
  * Persiste las vacantes en JobListing. Usa upsert cuando hay externalId; si no, busca por source + offerLink + userId.
  * @param userId - Si se pasa, las filas se asocian a ese usuario (p. ej. LinkedIn con API key del usuario). null = global.
  */
-export async function saveJobListings(
+async function saveJobListings(
   jobs: ScrapedJob[],
   userId?: string | null
 ): Promise<{ saved: number; firstError?: string }> {

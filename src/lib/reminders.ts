@@ -39,7 +39,6 @@ export function upcomingOrOverdueTasks(
   applications: AppLike[],
   withinDays: number = 7
 ): { task: TaskLike & { id: string; title: string; type: string }; application: AppLike }[] {
-  const now = new Date();
   const future = new Date();
   future.setDate(future.getDate() + withinDays);
   const result: { task: TaskLike & { id: string; title: string; type: string }; application: AppLike }[] = [];

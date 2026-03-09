@@ -23,7 +23,7 @@ const AUTH_PATHS = ["/login", "/register"];
 export function FocusModeProvider({ children }: { children: ReactNode }) {
   const [focusMode, setFocusMode] = useState(false);
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const isAuthPage = pathname && AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
   const isLanding = pathname === "/" && status !== "authenticated";
 

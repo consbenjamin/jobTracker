@@ -3,8 +3,6 @@
  * Activar/desactivar fuentes: ENABLE_REMOTIVE, ENABLE_REMOTEOK, ENABLE_LINKEDIN (true por defecto; "false" para desactivar).
  */
 
-export const SCRAPE_SCHEDULE = "0 9 * * *";
-export const SCRAPE_SCHEDULE_LABEL = "Una vez al día (9:00 UTC)";
 export const SCRAPE_SCHEDULE_TIME = "9:00 UTC";
 
 export const SCRAPE_SOURCES = [

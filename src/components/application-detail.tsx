@@ -22,7 +22,7 @@ import { ContactList } from "@/components/contact-list";
 import { InteractionList } from "@/components/interaction-list";
 import { TaskList } from "@/components/task-list";
 import { toast } from "sonner";
-import { Trash2, Copy, Star, MessageSquare, Activity, Link2, FileText, ListChecks, Users, CalendarCheck } from "lucide-react";
+import { Trash2, Copy, Star, MessageSquare, Activity, Link2, FileText, ListChecks } from "lucide-react";
 
 type Application = {
   id: string;
@@ -476,13 +476,10 @@ function NotesEditor({
   onSave: (notes: string) => void;
 }) {
   const [notes, setNotes] = useState(initialNotes);
-  const [saving, setSaving] = useState(false);
 
   const handleBlur = () => {
     if (notes === initialNotes) return;
-    setSaving(true);
     onSave(notes);
-    setSaving(false);
   };
 
   return (

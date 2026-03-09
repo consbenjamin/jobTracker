@@ -23,11 +23,11 @@ export const JOB_CATEGORIES = [
   { id: "all-others", label: "All others", linkedInQuery: "remote jobs" },
 ] as const;
 
-export type JobCategoryId = (typeof JOB_CATEGORIES)[number]["id"];
+type JobCategoryId = (typeof JOB_CATEGORIES)[number]["id"];
 
 export const DEFAULT_JOB_CATEGORIES: JobCategoryId[] = ["software-development"];
 
-export function getCategoryById(id: string): (typeof JOB_CATEGORIES)[number] | undefined {
+function getCategoryById(id: string): (typeof JOB_CATEGORIES)[number] | undefined {
   return JOB_CATEGORIES.find((c) => c.id === id);
 }
 
