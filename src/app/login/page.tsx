@@ -64,6 +64,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const [csrfToken, setCsrfToken] = useState<string>("");
 
   useEffect(() => {
@@ -94,6 +95,19 @@ function LoginForm() {
       if (err instanceof AuthError) setError(err.message ?? "Error al iniciar sesión");
       else setError("Error al iniciar sesión");
       setLoading(false);
+    }
+  }
+
+  async function handleOAuth(provider: "google" | "github") {
+    setError("");
+    setOauthLoading(true);
+    try {
+      await signIn(provider, {
+        callbackUrl,
+      });
+    } catch (err) {
+      setError("No se pudo redirigir al proveedor. Inténtalo de nuevo.");
+      setOauthLoading(false);
     }
   }
 
@@ -130,40 +144,26 @@ function LoginForm() {
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <form
-              action={`${AUTH_BASE}/signin/google`}
-              method="POST"
-              className="w-full min-w-0"
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 min-w-0 inline-flex items-center justify-center gap-2"
+              disabled={loading || oauthLoading}
+              onClick={() => void handleOAuth("google")}
             >
-              <input type="hidden" name="csrfToken" value={csrfToken} />
-              <input type="hidden" name="callbackUrl" value={callbackUrl} />
-              <Button
-                type="submit"
-                variant="outline"
-                className="w-full h-11 min-w-0 inline-flex items-center justify-center gap-2"
-                disabled={loading || !csrfToken}
-              >
-                <GoogleIcon className="h-5 w-5 shrink-0" />
-                Google
-              </Button>
-            </form>
-            <form
-              action={`${AUTH_BASE}/signin/github`}
-              method="POST"
-              className="w-full min-w-0"
+              <GoogleIcon className="h-5 w-5 shrink-0" />
+              {oauthLoading ? "Conectando…" : "Google"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-11 min-w-0 inline-flex items-center justify-center gap-2"
+              disabled={loading || oauthLoading}
+              onClick={() => void handleOAuth("github")}
             >
-              <input type="hidden" name="csrfToken" value={csrfToken} />
-              <input type="hidden" name="callbackUrl" value={callbackUrl} />
-              <Button
-                type="submit"
-                variant="outline"
-                className="w-full h-11 min-w-0 inline-flex items-center justify-center gap-2"
-                disabled={loading || !csrfToken}
-              >
-                <GitHubIcon className="h-5 w-5 shrink-0" />
-                GitHub
-              </Button>
-            </form>
+              <GitHubIcon className="h-5 w-5 shrink-0" />
+              {oauthLoading ? "Conectando…" : "GitHub"}
+            </Button>
           </div>
 
           <div className="relative">
