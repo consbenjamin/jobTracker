@@ -21,6 +21,7 @@ export const { handlers, auth } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      // OWASP A07: vincular cuentas por email; en entornos estrictos valorar false y gestionar duplicados
       allowDangerousEmailAccountLinking: true,
     }),
     GitHub({

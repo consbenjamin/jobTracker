@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { isRegisterRateLimited } from "@/lib/rate-limit";
+import { logSecurityEvent } from "@/lib/security-logger";
 
 const EMAIL_MAX_LENGTH = 254;
 const PASSWORD_MAX_LENGTH = 128;
@@ -8,6 +10,13 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: NextRequest) {
   try {
+    if (isRegisterRateLimited(request)) {
+      logSecurityEvent({ type: "auth_register_rate_limited", ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown" });
+      return NextResponse.json(
+        { error: "Demasiados intentos. Espera un minuto e inténtalo de nuevo." },
+        { status: 429 }
+      );
+    }
     const body = await request.json();
     const { email, password } = body;
     const emailStr = typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -24,6 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
     if (!EMAIL_REGEX.test(emailStr)) {
+      logSecurityEvent({ type: "auth_register_attempt", ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown", success: false, reason: "invalid_email" });
       return NextResponse.json(
         { error: "El formato del email no es válido" },
         { status: 400 }
@@ -45,6 +55,7 @@ export async function POST(request: NextRequest) {
       where: { email: emailStr },
     });
     if (existing) {
+      logSecurityEvent({ type: "auth_register_attempt", ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown", success: false, reason: "email_exists" });
       return NextResponse.json(
         { error: "Ya existe una cuenta con ese email" },
         { status: 409 }
@@ -57,6 +68,7 @@ export async function POST(request: NextRequest) {
         password: hashed,
       },
     });
+    logSecurityEvent({ type: "auth_register_attempt", ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown", success: true });
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error(error);

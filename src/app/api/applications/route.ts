@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { clampSearch, clampFilterField, clampTagList } from "@/lib/input-validation";
 
 function escapeCsvCell(value: string | null | undefined): string {
   if (value == null) return "";
@@ -18,9 +19,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const exportCsv = searchParams.get("export") === "csv";
-    const search = searchParams.get("search");
-    const company = searchParams.get("company");
-    const role = searchParams.get("role");
+    const search = clampSearch(searchParams.get("search"));
+    const company = clampFilterField(searchParams.get("company"));
+    const role = clampFilterField(searchParams.get("role"));
     const status = searchParams.get("status");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
@@ -28,12 +29,11 @@ export async function GET(request: NextRequest) {
     const isFavoriteParam = searchParams.get("isFavorite");
 
     const andParts: Record<string, unknown>[] = [];
-    if (search?.trim()) {
-      const term = search.trim();
+    if (search) {
       andParts.push({
         OR: [
-          { company: { contains: term, mode: "insensitive" } },
-          { role: { contains: term, mode: "insensitive" } },
+          { company: { contains: search, mode: "insensitive" } },
+          { role: { contains: search, mode: "insensitive" } },
         ],
       });
     }
@@ -46,8 +46,8 @@ export async function GET(request: NextRequest) {
       if (to) appliedAt.lte = to;
       andParts.push({ appliedAt });
     }
-    if (tagsParam?.trim()) {
-      const tagList = tagsParam.split(",").map((t) => t.trim()).filter(Boolean);
+    if (tagsParam) {
+      const tagList = clampTagList(tagsParam.split(","));
       if (tagList.length > 0) {
         andParts.push({
           OR: tagList.map((tag) => ({

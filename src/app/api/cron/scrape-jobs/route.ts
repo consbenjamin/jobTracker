@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runCronScraping } from "@/lib/scraping";
+import { logSecurityEvent } from "@/lib/security-logger";
 
 /**
  * Endpoint para el cron de Vercel. Ejecuta scrapers globales y por usuario (API key propia de SerpApi).
@@ -10,6 +11,7 @@ export async function GET(request: NextRequest) {
   const bearer = request.headers.get("Authorization");
   const token = bearer?.replace(/^Bearer\s+/i, "").trim();
   if (!expectedSecret || token !== expectedSecret) {
+    logSecurityEvent({ type: "cron_unauthorized", reason: expectedSecret ? "invalid_token" : "no_cron_secret" });
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

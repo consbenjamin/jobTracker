@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { clampSearch, clampFilterField, clampTagList, clampPage, clampLimit } from "@/lib/input-validation";
 
 /**
  * Lista las vacantes descubiertas (JobListing) del scraping.
@@ -12,37 +13,37 @@ export async function GET(request: NextRequest) {
     if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
-    const source = searchParams.get("source");
-    const search = searchParams.get("search");
-    const modality = searchParams.get("modality"); // remoto | presencial | hibrido | unspecified
+    const source = clampFilterField(searchParams.get("source"));
+    const search = clampSearch(searchParams.get("search"));
+    const modalityRaw = searchParams.get("modality"); // remoto | presencial | hibrido | unspecified
     const categoriesParam = searchParams.get("categories"); // comma-separated
-    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
-    const limit = Math.min(50, Math.max(6, parseInt(searchParams.get("limit") ?? "12", 10) || 12));
+    const page = clampPage(parseInt(searchParams.get("page") ?? "1", 10) || 1);
+    const limit = clampLimit(parseInt(searchParams.get("limit") ?? "12", 10) || 12, 12, 50);
     const skip = (page - 1) * limit;
 
     const andParts: Record<string, unknown>[] = [
       { OR: [{ userId: null }, { userId }] },
     ];
-    if (source?.trim()) andParts.push({ source: source.trim() });
-    if (search?.trim()) {
-      const term = search.trim();
+    if (source) andParts.push({ source });
+    if (search) {
       andParts.push({
         OR: [
-          { company: { contains: term, mode: "insensitive" } },
-          { role: { contains: term, mode: "insensitive" } },
+          { company: { contains: search, mode: "insensitive" } },
+          { role: { contains: search, mode: "insensitive" } },
         ],
       });
     }
-    if (categoriesParam?.trim()) {
-      const list = categoriesParam.split(",").map((c) => c.trim()).filter(Boolean);
+    if (categoriesParam) {
+      const list = clampTagList(categoriesParam.split(","));
       if (list.length > 0) {
         andParts.push({
           OR: [{ category: { in: list } }, { category: null }],
         });
       }
     }
-    if (modality?.trim()) {
-      const m = modality.trim().toLowerCase();
+    const modality = modalityRaw?.trim().toLowerCase();
+    if (modality) {
+      const m = modality;
       if (m === "unspecified" || m === "no especifica") {
         andParts.push({ modality: null });
       } else if (["remoto", "presencial", "hibrido"].includes(m)) {
