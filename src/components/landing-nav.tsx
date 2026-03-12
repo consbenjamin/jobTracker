@@ -4,8 +4,31 @@ import Link from "next/link";
 import { Briefcase, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
+import { useLanguage } from "@/components/language-provider";
 
 export function LandingNav() {
+  const { lang } = useLanguage();
+
+  const labels = {
+    login: {
+      es: "Iniciar sesión",
+      en: "Log in",
+    },
+    register: {
+      es: "Registrarse",
+      en: "Sign up",
+    },
+    loginAria: {
+      es: "Iniciar sesión",
+      en: "Log in",
+    },
+    registerAria: {
+      es: "Registrarse",
+      en: "Sign up",
+    },
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/80 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="w-full max-w-7xl mx-auto flex h-14 sm:h-16 items-center justify-between gap-2 px-3 sm:px-6 min-w-0">
@@ -17,17 +40,26 @@ export function LandingNav() {
           <span className="truncate">Job Tracker</span>
         </Link>
         <div className="flex items-center gap-1 sm:gap-3 min-w-0 shrink-0">
+          <LanguageToggle />
           <ThemeToggle />
           <Button asChild variant="ghost" size="sm" className="text-sm size-9 sm:size-auto sm:h-9 sm:px-3 sm:py-2 p-0">
-            <Link href="/login" className="flex items-center justify-center gap-2" aria-label="Iniciar sesión">
+            <Link
+              href="/login"
+              className="flex items-center justify-center gap-2"
+              aria-label={labels.loginAria[lang]}
+            >
               <LogIn className="h-4 w-4 sm:h-4 sm:w-4 shrink-0" />
-              <span className="hidden sm:inline">Iniciar sesión</span>
+              <span className="hidden sm:inline">{labels.login[lang]}</span>
             </Link>
           </Button>
           <Button asChild size="sm" className="text-sm shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 size-9 sm:size-auto sm:h-9 sm:px-4 sm:py-2 p-0">
-            <Link href="/register" className="flex items-center justify-center gap-2" aria-label="Registrarse">
+            <Link
+              href="/register"
+              className="flex items-center justify-center gap-2"
+              aria-label={labels.registerAria[lang]}
+            >
               <UserPlus className="h-4 w-4 sm:h-4 sm:w-4 shrink-0" />
-              <span className="hidden sm:inline">Registrarse</span>
+              <span className="hidden sm:inline">{labels.register[lang]}</span>
             </Link>
           </Button>
         </div>

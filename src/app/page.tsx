@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RemindersBlock } from "@/components/reminders-block";
 import { LandingPage } from "@/components/landing-page";
 import { ensureArray } from "@/lib/utils";
+import { useLanguage } from "@/components/language-provider";
 
 type Application = {
   id: string;
@@ -58,6 +59,7 @@ function DashboardSkeleton() {
 }
 
 function DashboardContent() {
+  const { lang } = useLanguage();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,12 +92,119 @@ function DashboardContent() {
   const offersCount = applications.filter((a) => a.status === "Offer").length;
   const favorites = applications.filter((a) => a.isFavorite).slice(0, 10);
 
+  const texts = {
+    title: {
+      es: "Job Tracker",
+      en: "Job Tracker",
+    },
+    subtitle: {
+      es: "Seguimiento de postulaciones, contactos e interacciones.",
+      en: "Track applications, contacts and interactions.",
+    },
+    activeLabel: {
+      es: "Activas",
+      en: "Active",
+    },
+    activeHint: {
+      es: "Sin rechazo ni ghosted",
+      en: "Not rejected or ghosted",
+    },
+    inProcessLabel: {
+      es: "En proceso (7 días)",
+      en: "In progress (7 days)",
+    },
+    inProcessHint: {
+      es: "Aplicado / follow-up / entrevista",
+      en: "Applied / follow‑up / interview",
+    },
+    offersLabel: {
+      es: "Ofertas",
+      en: "Offers",
+    },
+    offersHint: {
+      es: "Estado oferta",
+      en: "Offer status",
+    },
+    favoritesLabel: {
+      es: "Destacadas",
+      en: "Starred",
+    },
+    viewAll: {
+      es: "Ver todas",
+      en: "View all",
+    },
+    applicationsCardTitle: {
+      es: "Postulaciones",
+      en: "Applications",
+    },
+    applicationsCardDesc: {
+      es: "Kanban por estado, filtros y detalle con timeline.",
+      en: "Kanban by status, filters and detailed timeline.",
+    },
+    applicationsCta: {
+      es: "Ver postulaciones",
+      en: "View applications",
+    },
+    quickCaptureTitle: {
+      es: "Captura rápida",
+      en: "Quick capture",
+    },
+    quickCaptureDesc: {
+      es: "Añade una postulación en menos de un minuto.",
+      en: "Add an application in under a minute.",
+    },
+    quickCaptureCta: {
+      es: "Nueva postulación",
+      en: "New application",
+    },
+    analyticsTitle: {
+      es: "Analytics",
+      en: "Analytics",
+    },
+    analyticsDesc: {
+      es: "Dashboard con funnel, tasa de respuesta y más.",
+      en: "Dashboard with funnel, response rate and more.",
+    },
+    analyticsCta: {
+      es: "Ver analytics",
+      en: "View analytics",
+    },
+    extensionBadge: {
+      es: "Disponible en Chrome",
+      en: "Available on Chrome",
+    },
+    extensionTitle: {
+      es: "Extensión para LinkedIn",
+      en: "LinkedIn extension",
+    },
+    extensionDesc: {
+      es: "Captura una vacante de LinkedIn y añádela a Postulaciones con un clic, sin copiar y pegar datos manualmente.",
+      en: "Capture a LinkedIn job and add it to Applications in one click, without copying and pasting data.",
+    },
+    extensionCta: {
+      es: "Instalar en Chrome",
+      en: "Install on Chrome",
+    },
+    extensionBullets: {
+      es: [
+        "Guarda ofertas directamente desde LinkedIn.",
+        "Empresa, rol y enlace se completan más rápido.",
+        "Tu flujo sigue en Postulaciones como siempre.",
+      ],
+      en: [
+        "Save offers directly from LinkedIn.",
+        "Company, role and link are filled in faster.",
+        "Your usual flow in Applications stays the same.",
+      ],
+    },
+  } as const;
+
   return (
     <div className="space-y-6 sm:space-y-8 min-w-0">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Job Tracker</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{texts.title[lang]}</h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Seguimiento de postulaciones, contactos e interacciones.
+          {texts.subtitle[lang]}
         </p>
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
@@ -103,36 +212,36 @@ function DashboardContent() {
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 shrink-0" />
-                Activas
+                {texts.activeLabel[lang]}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{activeCount}</p>
-              <p className="text-xs text-muted-foreground">Sin rechazo ni ghosted</p>
+              <p className="text-xs text-muted-foreground">{texts.activeHint[lang]}</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4 shrink-0" />
-                En proceso (7 días)
+                {texts.inProcessLabel[lang]}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{thisWeekCount}</p>
-              <p className="text-xs text-muted-foreground">Aplicado / follow-up / entrevista</p>
+              <p className="text-xs text-muted-foreground">{texts.inProcessHint[lang]}</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Award className="h-4 w-4 shrink-0" />
-                Ofertas
+                {texts.offersLabel[lang]}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">{offersCount}</p>
-              <p className="text-xs text-muted-foreground">Estado oferta</p>
+              <p className="text-xs text-muted-foreground">{texts.offersHint[lang]}</p>
             </CardContent>
           </Card>
         </div>
@@ -141,10 +250,10 @@ function DashboardContent() {
           <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2 flex-wrap">
             <CardTitle className="flex items-center gap-2 text-base">
               <Star className="h-5 w-5 text-amber-500 fill-amber-500 shrink-0" />
-              Destacadas
+              {texts.favoritesLabel[lang]}
             </CardTitle>
             <Button asChild variant="outline" size="sm">
-              <Link href="/applications">Ver todas</Link>
+              <Link href="/applications">{texts.viewAll[lang]}</Link>
             </Button>
           </CardHeader>
           <CardContent>
@@ -169,16 +278,16 @@ function DashboardContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5 shrink-0" />
-              Postulaciones
+                {texts.applicationsCardTitle[lang]}
             </CardTitle>
             <CardDescription>
-              Kanban por estado, filtros y detalle con timeline.
+                {texts.applicationsCardDesc[lang]}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full min-w-0 sm:w-auto">
               <Link href="/applications" className="flex items-center justify-center min-w-0">
-                Ver postulaciones
+                  {texts.applicationsCta[lang]}
               </Link>
             </Button>
           </CardContent>
@@ -187,16 +296,16 @@ function DashboardContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PlusCircle className="h-5 w-5 shrink-0" />
-              Captura rápida
+                {texts.quickCaptureTitle[lang]}
             </CardTitle>
             <CardDescription>
-              Añade una postulación en menos de un minuto.
+                {texts.quickCaptureDesc[lang]}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
               <Link href="/quick-capture" className="flex items-center justify-center min-w-0">
-                Nueva postulación
+                  {texts.quickCaptureCta[lang]}
               </Link>
             </Button>
           </CardContent>
@@ -205,16 +314,16 @@ function DashboardContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 shrink-0" />
-              Analytics
+                {texts.analyticsTitle[lang]}
             </CardTitle>
             <CardDescription>
-              Dashboard con funnel, tasa de respuesta y más.
+                {texts.analyticsDesc[lang]}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline" className="w-full min-w-0 sm:w-auto">
               <Link href="/analytics" className="flex items-center justify-center min-w-0">
-                Ver analytics
+                  {texts.analyticsCta[lang]}
               </Link>
             </Button>
           </CardContent>
@@ -229,7 +338,7 @@ function DashboardContent() {
               <div className="space-y-4">
                 <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                   <Chrome className="h-3.5 w-3.5 shrink-0" />
-                  Disponible en Chrome
+                  {texts.extensionBadge[lang]}
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 text-primary shadow-sm">
@@ -237,10 +346,10 @@ function DashboardContent() {
                   </div>
                   <div className="space-y-2">
                     <CardTitle className="text-xl sm:text-2xl">
-                      Extensión para LinkedIn
+                      {texts.extensionTitle[lang]}
                     </CardTitle>
                     <CardDescription className="max-w-2xl text-sm leading-6 sm:text-base">
-                      Captura una vacante de LinkedIn y añádela a Postulaciones con un clic, sin copiar y pegar datos manualmente.
+                      {texts.extensionDesc[lang]}
                     </CardDescription>
                   </div>
                 </div>
@@ -252,7 +361,7 @@ function DashboardContent() {
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 min-w-0"
                 >
-                  Instalar en Chrome
+                  {texts.extensionCta[lang]}
                   <ArrowUpRight className="h-4 w-4 shrink-0" />
                 </a>
               </Button>
@@ -260,11 +369,7 @@ function DashboardContent() {
           </CardHeader>
           <CardContent className="relative">
             <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-3">
-              {[
-                "Guarda ofertas directamente desde LinkedIn.",
-                "Empresa, rol y enlace se completan más rápido.",
-                "Tu flujo sigue en Postulaciones como siempre.",
-              ].map((item) => (
+              {texts.extensionBullets[lang].map((item) => (
                 <div
                   key={item}
                   className="flex items-start gap-2 rounded-xl border border-border/60 bg-background/70 p-3 backdrop-blur-sm"

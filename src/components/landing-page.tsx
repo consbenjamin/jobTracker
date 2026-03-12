@@ -21,69 +21,237 @@ import {
   Puzzle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/language-provider";
 
-const features = [
-  {
-    icon: Puzzle,
-    title: "Extensión LinkedIn",
-    description: "En Chrome, desde cualquier oferta en LinkedIn usá «Guardar en JobTracker» y la postulación se crea en tu cuenta al instante.",
+const heroTexts = {
+  badge: {
+    es: "Seguimiento de búsqueda de empleo",
+    en: "Job search tracking",
   },
-  {
-    icon: Globe,
-    title: "Vacantes descubiertas",
-    description: "Ofertas automáticas desde varias fuentes. Lista con filtros; convertí cualquier vacante en postulación con un clic.",
+  titleMain: {
+    es: "Organiza tus postulaciones.",
+    en: "Organize your job applications.",
   },
-  {
-    icon: Rss,
-    title: "De vacante a postulación",
-    description: "Convierte cualquier vacante descubierta en una postulación con un clic. Empresa, rol y link se rellenan solos; tú sigues el flujo normal en el Kanban.",
+  titleHighlight: {
+    es: "Ninguna oportunidad se pierde.",
+    en: "No opportunity slips away.",
   },
-  {
-    icon: Kanban,
-    title: "Kanban y lista",
-    description: "Vista Kanban por estado y vista lista con toggle. Filtros por empresa, rol, estado, fechas, favoritas y etiquetas.",
+  subtitle: {
+    es: "Vacantes automáticas, extensión para LinkedIn, Kanban, contactos, tareas y analytics. Tema claro/oscuro y PWA.",
+    en: "Automatic job leads, LinkedIn extension, Kanban, contacts, tasks and analytics. Light/dark theme and PWA.",
   },
-  {
-    icon: PlusCircle,
-    title: "Captura rápida",
-    description: "Formulario minimalista (empresa, rol, link, fuente) para añadir una postulación en menos de un minuto.",
+  ctaPrimary: {
+    es: "Crear cuenta gratis",
+    en: "Create free account",
   },
-  {
-    icon: BarChart3,
-    title: "Analytics",
-    description: "Funnel por estado, tasa de respuesta, días a primera respuesta, postulaciones por mes y canales (LinkedIn, email, llamada).",
+  ctaSecondary: {
+    es: "Iniciar sesión",
+    en: "Log in",
   },
-  {
-    icon: Users,
-    title: "Contactos",
-    description: "Por cada postulación: nombre, posición, canal (LinkedIn/email), link y notas. Todo en un solo lugar.",
+  detailSectionTitle: {
+    es: "Detalle por postulación",
+    en: "Application details",
   },
-  {
-    icon: MessageSquare,
-    title: "Interacciones",
-    description: "Registra cada interacción (LinkedIn, email, llamada) con fecha, si hubo respuesta y resultado.",
+  detailSectionHeading: {
+    es: "Todo lo que necesitas por candidatura",
+    en: "Everything you need for each application",
   },
-  {
-    icon: ListTodo,
-    title: "Tareas y recordatorios",
-    description: "Tareas con fecha límite (follow-up, email, llamada). Recordatorios configurables para postulaciones sin respuesta.",
+  detailItems: {
+    es: [
+      "Extensión LinkedIn: guardá ofertas desde LinkedIn en un clic",
+      "Vacantes descubiertas: varias fuentes, filtros y pasar a postulación en un clic",
+      "Empresa, rol, link, fuente, estado, seniority, modalidad, salario esperado, stack, notas",
+      "Checklist: portfolio, formulario externo, referral",
+      "Timeline de actividades e historial de cambios",
+      "Contactos (nombre, posición, LinkedIn/email, link)",
+      "Interacciones (tipo, fecha, respuesta, resumen)",
+      "Tareas con fecha límite y recordatorios",
+      "Favorita, etiquetas, modo focus para concentrarte",
+    ],
+    en: [
+      "LinkedIn extension: save offers from LinkedIn in one click",
+      "Discovered jobs: multiple sources, filters and convert to application in one click",
+      "Company, role, link, source, status, seniority, modality, expected salary, stack, notes",
+      "Checklist: portfolio, external form, referral",
+      "Activity timeline and change history",
+      "Contacts (name, position, LinkedIn/email, link)",
+      "Interactions (type, date, response, summary)",
+      "Tasks with due dates and reminders",
+      "Favorite, tags, focus mode to concentrate",
+    ],
   },
-  {
-    icon: FileSpreadsheet,
-    title: "Exportar CSV y calendario",
-    description: "Exporta a CSV. Exporta tu calendario ICS para Google Calendar o Apple Calendar.",
+  featuresSectionTitle: {
+    es: "Funcionalidades",
+    en: "Features",
   },
-  {
-    icon: Shield,
-    title: "Tus datos seguros",
-    description: "Autenticación con email, Google o GitHub. Cada usuario ve solo sus postulaciones.",
+  featuresSectionHeading: {
+    es: "Diseñado para que tu búsqueda sea ordenada y efectiva",
+    en: "Designed to make your job search organized and effective",
   },
-  {
-    icon: Zap,
-    title: "PWA y atajos",
-    description: "Instálalo como app en el móvil. Atajos: Ctrl/Cmd+N → captura rápida, / → búsqueda global.",
+  finalHeading: {
+    es: "Empieza en menos de un minuto",
+    en: "Get started in under a minute",
   },
-];
+  finalText: {
+    es: "Regístrate con tu email o con Google/GitHub. Sin tarjeta de crédito. Tus datos solo tuyos.",
+    en: "Sign up with email or Google/GitHub. No credit card required. Your data stays yours.",
+  },
+  finalCta: {
+    es: "Registrarse gratis",
+    en: "Sign up for free",
+  },
+} as const;
+
+const features = {
+  es: [
+    {
+      icon: Puzzle,
+      title: "Extensión LinkedIn",
+      description:
+        "En Chrome, desde cualquier oferta en LinkedIn usá «Guardar en JobTracker» y la postulación se crea en tu cuenta al instante.",
+    },
+    {
+      icon: Globe,
+      title: "Vacantes descubiertas",
+      description:
+        "Ofertas automáticas desde varias fuentes. Lista con filtros; convertí cualquier vacante en postulación con un clic.",
+    },
+    {
+      icon: Rss,
+      title: "De vacante a postulación",
+      description:
+        "Convierte cualquier vacante descubierta en una postulación con un clic. Empresa, rol y link se rellenan solos; tú sigues el flujo normal en el Kanban.",
+    },
+    {
+      icon: Kanban,
+      title: "Kanban y lista",
+      description:
+        "Vista Kanban por estado y vista lista con toggle. Filtros por empresa, rol, estado, fechas, favoritas y etiquetas.",
+    },
+    {
+      icon: PlusCircle,
+      title: "Captura rápida",
+      description:
+        "Formulario minimalista (empresa, rol, link, fuente) para añadir una postulación en menos de un minuto.",
+    },
+    {
+      icon: BarChart3,
+      title: "Analytics",
+      description:
+        "Funnel por estado, tasa de respuesta, días a primera respuesta, postulaciones por mes y canales (LinkedIn, email, llamada).",
+    },
+    {
+      icon: Users,
+      title: "Contactos",
+      description:
+        "Por cada postulación: nombre, posición, canal (LinkedIn/email), link y notas. Todo en un solo lugar.",
+    },
+    {
+      icon: MessageSquare,
+      title: "Interacciones",
+      description:
+        "Registra cada interacción (LinkedIn, email, llamada) con fecha, si hubo respuesta y resultado.",
+    },
+    {
+      icon: ListTodo,
+      title: "Tareas y recordatorios",
+      description:
+        "Tareas con fecha límite (follow-up, email, llamada). Recordatorios configurables para postulaciones sin respuesta.",
+    },
+    {
+      icon: FileSpreadsheet,
+      title: "Exportar CSV y calendario",
+      description:
+        "Exporta a CSV. Exporta tu calendario ICS para Google Calendar o Apple Calendar.",
+    },
+    {
+      icon: Shield,
+      title: "Tus datos seguros",
+      description:
+        "Autenticación con email, Google o GitHub. Cada usuario ve solo sus postulaciones.",
+    },
+    {
+      icon: Zap,
+      title: "PWA y atajos",
+      description:
+        "Instálalo como app en el móvil. Atajos: Ctrl/Cmd+N → captura rápida, / → búsqueda global.",
+    },
+  ],
+  en: [
+    {
+      icon: Puzzle,
+      title: "LinkedIn extension",
+      description:
+        "On Chrome, from any LinkedIn job use “Save to JobTracker” and the application is created in your account instantly.",
+    },
+    {
+      icon: Globe,
+      title: "Discovered jobs",
+      description:
+        "Automatic offers from multiple sources. List with filters; turn any job into an application in one click.",
+    },
+    {
+      icon: Rss,
+      title: "From job to application",
+      description:
+        "Turn any discovered job into an application in one click. Company, role and link are prefilled; you keep your usual Kanban flow.",
+    },
+    {
+      icon: Kanban,
+      title: "Kanban and list",
+      description:
+        "Kanban view by status and list view with a toggle. Filters by company, role, status, dates, favorites and tags.",
+    },
+    {
+      icon: PlusCircle,
+      title: "Quick capture",
+      description:
+        "Minimal form (company, role, link, source) to add an application in less than a minute.",
+    },
+    {
+      icon: BarChart3,
+      title: "Analytics",
+      description:
+        "Funnel by status, response rate, days to first reply, applications per month and channels (LinkedIn, email, call).",
+    },
+    {
+      icon: Users,
+      title: "Contacts",
+      description:
+        "For each application: name, role, channel (LinkedIn/email), link and notes. All in one place.",
+    },
+    {
+      icon: MessageSquare,
+      title: "Interactions",
+      description:
+        "Log each interaction (LinkedIn, email, call) with date, whether there was a reply, and the outcome.",
+    },
+    {
+      icon: ListTodo,
+      title: "Tasks and reminders",
+      description:
+        "Tasks with due dates (follow‑up, email, call). Configurable reminders for applications without a reply.",
+    },
+    {
+      icon: FileSpreadsheet,
+      title: "CSV and calendar export",
+      description:
+        "Export to CSV. Export your ICS calendar to Google Calendar or Apple Calendar.",
+    },
+    {
+      icon: Shield,
+      title: "Your data is safe",
+      description:
+        "Sign in with email, Google or GitHub. Each user only sees their own applications.",
+    },
+    {
+      icon: Zap,
+      title: "PWA and shortcuts",
+      description:
+        "Install it as a mobile app. Shortcuts: Ctrl/Cmd+N → quick capture, / → global search.",
+    },
+  ],
+} as const;
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -102,6 +270,8 @@ const stagger = {
 };
 
 export function LandingPage() {
+  const { lang } = useLanguage();
+
   return (
     <div className="landing-wrap flex flex-col w-full min-w-0 overflow-x-hidden">
       {/* Hero */}
@@ -130,20 +300,22 @@ export function LandingPage() {
             variants={fadeUp}
           >
             <Briefcase className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
-            <span className="text-center">Seguimiento de búsqueda de empleo</span>
+            <span className="text-center">{heroTexts.badge[lang]}</span>
           </motion.div>
           <motion.h1
             className="text-2xl font-bold tracking-tight sm:text-4xl md:text-5xl lg:text-6xl text-balance break-words px-1"
             variants={fadeUp}
           >
-            Organiza tus postulaciones.
-            <span className="block mt-1 sm:mt-2 landing-text-gradient break-words">Ninguna oportunidad se pierde.</span>
+            {heroTexts.titleMain[lang]}
+            <span className="block mt-1 sm:mt-2 landing-text-gradient break-words">
+              {heroTexts.titleHighlight[lang]}
+            </span>
           </motion.h1>
           <motion.p
             className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto text-pretty px-1"
             variants={fadeUp}
           >
-            Vacantes automáticas, extensión para LinkedIn, Kanban, contactos, tareas y analytics. Tema claro/oscuro y PWA.
+            {heroTexts.subtitle[lang]}
           </motion.p>
           <motion.div
             className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center items-stretch sm:items-center pt-2 px-1"
@@ -151,12 +323,14 @@ export function LandingPage() {
           >
             <Button asChild size="lg" className="landing-cta w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold border-0 hover:opacity-95 min-w-0">
               <Link href="/register" className="inline-flex items-center justify-center gap-2 min-w-0">
-                Crear cuenta gratis
+                {heroTexts.ctaPrimary[lang]}
                 <ArrowRight className="h-4 w-4 shrink-0" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-medium border-border/80 bg-background/80 dark:bg-card/50 dark:border-border backdrop-blur min-w-0">
-              <Link href="/login" className="flex items-center justify-center min-w-0">Iniciar sesión</Link>
+              <Link href="/login" className="flex items-center justify-center min-w-0">
+                {heroTexts.ctaSecondary[lang]}
+              </Link>
             </Button>
           </motion.div>
         </motion.div>
@@ -174,9 +348,11 @@ export function LandingPage() {
           <div className="flex items-start gap-2 sm:gap-3 mb-8 sm:mb-10 min-w-0">
             <div className="landing-accent-line h-8 sm:h-10 rounded-full shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm sm:text-xl font-semibold text-muted-foreground uppercase tracking-wider">Detalle por postulación</h2>
+              <h2 className="text-sm sm:text-xl font-semibold text-muted-foreground uppercase tracking-wider">
+                {heroTexts.detailSectionTitle[lang]}
+              </h2>
               <p className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight mt-1 text-foreground break-words">
-                Todo lo que necesitas por candidatura
+                {heroTexts.detailSectionHeading[lang]}
               </p>
             </div>
           </div>
@@ -187,17 +363,7 @@ export function LandingPage() {
             whileInView="animate"
             viewport={{ once: true, margin: "-40px" }}
           >
-            {[
-              "Extensión LinkedIn: guardá ofertas desde LinkedIn en un clic",
-              "Vacantes descubiertas: varias fuentes, filtros y pasar a postulación en un clic",
-              "Empresa, rol, link, fuente, estado, seniority, modalidad, salario esperado, stack, notas",
-              "Checklist: portfolio, formulario externo, referral",
-              "Timeline de actividades e historial de cambios",
-              "Contactos (nombre, posición, LinkedIn/email, link)",
-              "Interacciones (tipo, fecha, respuesta, resumen)",
-              "Tareas con fecha límite y recordatorios",
-              "Favorita, etiquetas, modo focus para concentrarte",
-            ].map((item, i) => (
+            {heroTexts.detailItems[lang].map((item, i) => (
               <motion.li
                 key={i}
                 className="flex items-start gap-2 sm:gap-3 landing-card rounded-xl p-3 sm:p-4 transition-all duration-300 min-w-0"
@@ -223,9 +389,11 @@ export function LandingPage() {
           <div className="flex items-start gap-2 sm:gap-3 mb-8 sm:mb-10 min-w-0">
             <div className="landing-accent-line h-8 sm:h-10 rounded-full shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1">
-              <h2 className="text-sm sm:text-xl font-semibold text-muted-foreground uppercase tracking-wider">Funcionalidades</h2>
+              <h2 className="text-sm sm:text-xl font-semibold text-muted-foreground uppercase tracking-wider">
+                {heroTexts.featuresSectionTitle[lang]}
+              </h2>
               <p className="text-lg sm:text-2xl md:text-3xl font-bold tracking-tight mt-1 text-foreground break-words">
-                Diseñado para que tu búsqueda sea ordenada y efectiva
+                {heroTexts.featuresSectionHeading[lang]}
               </p>
             </div>
           </div>
@@ -236,7 +404,7 @@ export function LandingPage() {
             whileInView="animate"
             viewport={{ once: true, margin: "-40px" }}
           >
-            {features.map(({ icon: Icon, title, description }) => (
+            {features[lang].map(({ icon: Icon, title, description }) => (
               <motion.li key={title} variants={fadeUp} className="min-w-0">
                 <motion.div
                   className="h-full landing-card rounded-xl p-4 sm:p-6 transition-all duration-300 group min-w-0"
@@ -276,14 +444,16 @@ export function LandingPage() {
             <Target className="h-6 w-6 sm:h-7 sm:w-7" />
           </motion.div>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground break-words px-1">
-            Empieza en menos de un minuto
+            {heroTexts.finalHeading[lang]}
           </h2>
           <p className="text-muted-foreground text-xs sm:text-sm md:text-base px-1">
-            Regístrate con tu email o con Google/GitHub. Sin tarjeta de crédito. Tus datos solo tuyos.
+            {heroTexts.finalText[lang]}
           </p>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="px-1">
             <Button asChild size="lg" className="landing-cta h-11 sm:h-12 px-6 sm:px-8 text-sm sm:text-base font-semibold border-0 w-full sm:w-auto min-w-0">
-              <Link href="/register" className="flex items-center justify-center min-w-0">Registrarse gratis</Link>
+              <Link href="/register" className="flex items-center justify-center min-w-0">
+                {heroTexts.finalCta[lang]}
+              </Link>
             </Button>
           </motion.div>
         </div>

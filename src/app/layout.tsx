@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { FocusModeProvider } from "@/components/focus-mode-context";
 import { AuthProvider } from "@/components/auth-provider";
+import { LanguageProvider } from "@/components/language-provider";
 
 export const metadata: Metadata = {
   title: "Job Tracker",
@@ -15,6 +16,21 @@ const themeScript = `
   const stored = localStorage.getItem(key);
   const dark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('dark', dark);
+})();
+`;
+
+const languageScript = `
+(function() {
+  var key = 'job-tracker-lang';
+  var stored = null;
+  try {
+    stored = window.localStorage.getItem(key);
+  } catch (e) {
+    stored = null;
+  }
+  if (stored === 'es' || stored === 'en') {
+    document.documentElement.lang = stored;
+  }
 })();
 `;
 
@@ -34,10 +50,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: languageScript }} />
       </head>
       <body className="font-sans antialiased">
         <AuthProvider>
-          <FocusModeProvider>{children}</FocusModeProvider>
+          <LanguageProvider>
+            <FocusModeProvider>{children}</FocusModeProvider>
+          </LanguageProvider>
         </AuthProvider>
         <Analytics />
       </body>
