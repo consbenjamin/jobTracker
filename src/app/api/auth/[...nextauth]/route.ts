@@ -39,9 +39,18 @@ async function wrapHandler(
   const isCallback = req.url.includes("/callback/");
 
   if (status === 302 || status === 303 || status === 307) {
-    const loc = res.headers.get("Location");
+    let loc = res.headers.get("Location");
     if (!isValidRedirectUrl(loc)) {
       return buildRedirectToHome(req, res);
+    }
+    // En móvil, algunos navegadores no siguen bien redirects con URL relativa.
+    // Forzar siempre URL absoluta para evitar pantalla en blanco tras OAuth.
+    const locTrimmed = (loc ?? "").trim();
+    if (locTrimmed.startsWith("/") && !locTrimmed.startsWith("//")) {
+      const absoluteUrl = `${base}${locTrimmed}`;
+      const redirect = new Response(null, { status: res.status, headers: new Headers(res.headers) });
+      redirect.headers.set("Location", absoluteUrl);
+      return redirect;
     }
   }
 

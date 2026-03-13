@@ -3,7 +3,7 @@
 import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { AuthError } from "next-auth";
 import { Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -224,6 +224,34 @@ function LoginForm() {
   );
 }
 
+function LoginPageContent() {
+  const { status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace("/");
+    }
+  }, [status, router]);
+
+  if (status === "loading" || status === "authenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-background via-background to-muted/20">
+        <Card className="w-full max-w-[400px] shadow-xl">
+          <CardHeader>
+            <CardTitle>Iniciar sesión</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Cargando…</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return <LoginForm />;
+}
+
 export default function LoginPage() {
   return (
     <Suspense
@@ -240,7 +268,7 @@ export default function LoginPage() {
         </div>
       }
     >
-      <LoginForm />
+      <LoginPageContent />
     </Suspense>
   );
 }

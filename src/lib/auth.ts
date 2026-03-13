@@ -12,7 +12,13 @@ if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET?.trim()) {
 export const { handlers, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   trustHost: true,
-  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  session: {
+    strategy: "jwt",
+    // Sesiones basadas en inactividad: si pasa más de 7 días sin usarse, se cierra.
+    maxAge: 7 * 24 * 60 * 60, // 7 días
+    // Cada hora de actividad se refresca el token (sin exceder maxAge).
+    updateAge: 60 * 60, // 1 hora
+  },
   pages: {
     signIn: "/login",
     error: "/auth-error",
