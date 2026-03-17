@@ -22,6 +22,10 @@ type Config = {
   sources: Source[];
 };
 
+type AutoGhostConfig = {
+  enabled: boolean;
+};
+
 type JobCategory = { id: string; label: string };
 
 export default function ScrapingConfigPage() {
@@ -40,6 +44,8 @@ export default function ScrapingConfigPage() {
   } | null>(null);
   const [extensionTokenLoading, setExtensionTokenLoading] = useState(true);
   const [extensionTokenRotating, setExtensionTokenRotating] = useState(false);
+  const [autoGhostApplied, setAutoGhostApplied] = useState<boolean | null>(null);
+  const [autoGhostSaving, setAutoGhostSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,6 +67,47 @@ export default function ScrapingConfigPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/user/auto-ghost-applied")
+      .then((res) => res.json())
+      .then((data: unknown) => {
+        if (cancelled) return;
+        if (data && typeof data === "object" && "enabled" in data) {
+          const d = data as AutoGhostConfig;
+          setAutoGhostApplied(Boolean(d.enabled));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setAutoGhostApplied(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSetAutoGhostApplied = async (next: boolean) => {
+    setAutoGhostSaving(true);
+    try {
+      const res = await fetch("/api/user/auto-ghost-applied", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data?.error ?? "Error al guardar la configuración");
+        return;
+      }
+      setAutoGhostApplied(Boolean(data.enabled));
+      toast.success(next ? "Auto-ghost activado." : "Auto-ghost desactivado.");
+    } catch {
+      toast.error("Error al guardar la configuración");
+    } finally {
+      setAutoGhostSaving(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -455,6 +502,34 @@ export default function ScrapingConfigPage() {
               )}
               {categoriesSaving && (
                 <p className="text-xs text-muted-foreground mt-2">Guardando…</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="text-base font-medium flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Auto-ghost de “Applied”
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Si una postulación sigue en <code className="bg-muted px-1 rounded">Applied</code> durante 1 mes sin cambios, se marca como <code className="bg-muted px-1 rounded">Ghosted</code>.
+              </p>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              {autoGhostApplied === null ? (
+                <Skeleton className="h-10 w-full max-w-md" />
+              ) : (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={autoGhostApplied}
+                    onCheckedChange={(checked) => handleSetAutoGhostApplied(checked === true)}
+                    disabled={autoGhostSaving}
+                  />
+                  <span className="text-sm">
+                    {autoGhostApplied ? "Activado" : "Desactivado"}
+                  </span>
+                </label>
               )}
             </CardContent>
           </Card>

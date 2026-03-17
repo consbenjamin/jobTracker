@@ -5,6 +5,7 @@ import { isSourceEnabled } from "./config";
 import { scrapeLinkedIn } from "./linkedin";
 import { scrapeRemotive } from "./remotive";
 import { scrapeRemoteOK } from "./remoteok";
+import { ghostStaleAppliedApplications } from "@/lib/ghosting";
 import {
   parseUserJobCategories,
   getLinkedInQueryForCategory,
@@ -35,11 +36,13 @@ async function getRemotiveCategories(): Promise<string[]> {
 export async function runCronScraping(): Promise<{
   scraped: number;
   saved: number;
+  ghostedApplied?: number;
   firstError?: string;
 }> {
   let totalScraped = 0;
   let totalSaved = 0;
   let firstError: string | undefined;
+  let totalGhostedApplied = 0;
 
   const run = async (jobs: ScrapedJob[], userId: string | null) => {
     const n = jobs.length;
@@ -86,7 +89,10 @@ export async function runCronScraping(): Promise<{
     }
   }
 
-  return { scraped: totalScraped, saved: totalSaved, firstError };
+  const { updatedCount } = await ghostStaleAppliedApplications({ days: 30 });
+  totalGhostedApplied = updatedCount;
+
+  return { scraped: totalScraped, saved: totalSaved, ghostedApplied: totalGhostedApplied, firstError };
 }
 
 function deduplicate(jobs: ScrapedJob[]): ScrapedJob[] {

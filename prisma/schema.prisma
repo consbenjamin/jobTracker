@@ -41,6 +41,7 @@ model User {
   image                 String?
   password              String?      @db.Text
   serpApiKeyEncrypted   String?      @db.Text
+  autoGhostApplied     Boolean      @default(true) // Si en 1 mes no se actualiza Applied -> pasa a Ghosted
   jobCategories         String?      @db.Text // JSON array: ["software-development", "marketing", ...]
   // Token para la extensión de navegador (Chrome/Brave, etc.)
   extensionTokenHash    String?      @db.Text
