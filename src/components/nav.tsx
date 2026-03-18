@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut, User, Sparkles, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, Briefcase, PlusCircle, BarChart3, Menu, X, Search, LogOut, User, Sparkles, MoreHorizontal, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ const mainNavItems: NavItem[] = [
 const moreNavItems: NavItem[] = [
   { href: "/quick-capture", label: "Captura rápida", icon: PlusCircle },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/discovered/config", label: "Configuración", icon: Settings },
 ];
 
 const allNavItems: NavItem[] = [...mainNavItems, ...moreNavItems];
